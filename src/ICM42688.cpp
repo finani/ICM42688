@@ -1,22 +1,22 @@
 #include "Arduino.h"
-#include "ICM20689.h"
+#include "ICM42688.h"
 
-/* ICM20689 object, input the I2C bus and address */
-ICM20689::ICM20689(TwoWire &bus,uint8_t address){
+/* ICM42688 object, input the I2C bus and address */
+ICM42688::ICM42688(TwoWire &bus,uint8_t address){
   _i2c = &bus; // I2C bus
   _address = address; // I2C address
   _useSPI = false; // set to use I2C
 }
 
-/* ICM20689 object, input the SPI bus and chip select pin */
-ICM20689::ICM20689(SPIClass &bus,uint8_t csPin){
+/* ICM42688 object, input the SPI bus and chip select pin */
+ICM42688::ICM42688(SPIClass &bus,uint8_t csPin){
   _spi = &bus; // SPI bus
   _csPin = csPin; // chip select pin
   _useSPI = true; // set to use SPI
 }
 
-/* starts communication with the ICM20689 */
-int ICM20689::begin(){
+/* starts communication with the ICM42688 */
+int ICM42688::begin(){
   if( _useSPI ) { // using SPI for communication
     // use low speed SPI for register setting
     _useSPIHS = false;
@@ -36,9 +36,9 @@ int ICM20689::begin(){
   if(writeRegister(PWR_MGMNT_1,CLOCK_SEL_PLL) < 0) {
     return -1;
   }
-  // reset the ICM20689
+  // reset the ICM42688
   writeRegister(PWR_MGMNT_1,PWR_RESET);
-  // wait for ICM20689 to come back up
+  // wait for ICM42688 to come back up
   delay(1);
   // select clock source to gyro
   if(writeRegister(PWR_MGMNT_1,CLOCK_SEL_PLL) < 0) {
@@ -85,7 +85,7 @@ int ICM20689::begin(){
 }
 
 /* sets the accelerometer full scale range to values other than default */
-int ICM20689::setAccelRange(AccelRange range) {
+int ICM42688::setAccelRange(AccelRange range) {
   // use low speed SPI for register setting
   _useSPIHS = false;
   switch(range) {
@@ -127,7 +127,7 @@ int ICM20689::setAccelRange(AccelRange range) {
 }
 
 /* sets the gyro full scale range to values other than default */
-int ICM20689::setGyroRange(GyroRange range) {
+int ICM42688::setGyroRange(GyroRange range) {
   // use low speed SPI for register setting
   _useSPIHS = false;
   switch(range) {
@@ -169,7 +169,7 @@ int ICM20689::setGyroRange(GyroRange range) {
 }
 
 /* sets the DLPF bandwidth to values other than default */
-int ICM20689::setDlpfBandwidth(DlpfBandwidth bandwidth) {
+int ICM42688::setDlpfBandwidth(DlpfBandwidth bandwidth) {
   // use low speed SPI for register setting
   _useSPIHS = false;
   switch(bandwidth) {
@@ -243,7 +243,7 @@ int ICM20689::setDlpfBandwidth(DlpfBandwidth bandwidth) {
 }
 
 /* sets the sample rate divider to values other than default */
-int ICM20689::setSrd(uint8_t srd) {
+int ICM42688::setSrd(uint8_t srd) {
   // use low speed SPI for register setting
   _useSPIHS = false;
   /* setting the sample rate divider to 19 */
@@ -259,7 +259,7 @@ int ICM20689::setSrd(uint8_t srd) {
 }
 
 /* enables the data ready interrupt */
-int ICM20689::enableDataReadyInterrupt() {
+int ICM42688::enableDataReadyInterrupt() {
   // use low speed SPI for register setting
   _useSPIHS = false;
   /* setting the interrupt */
@@ -274,7 +274,7 @@ int ICM20689::enableDataReadyInterrupt() {
 }
 
 /* disables the data ready interrupt */
-int ICM20689::disableDataReadyInterrupt() {
+int ICM42688::disableDataReadyInterrupt() {
   // use low speed SPI for register setting
   _useSPIHS = false;
   if(writeRegister(INT_ENABLE,INT_DISABLE) < 0){ // disable interrupt
@@ -284,22 +284,22 @@ int ICM20689::disableDataReadyInterrupt() {
 }
 
 /* disables the data ready interrupt */
-uint8_t ICM20689::isInterrupted() {
+uint8_t ICM42688::isInterrupted() {
   _useSPIHS = false; // use the high speed SPI for data readout
   readRegisters(INT_STATUS, 1, &_isInterrupted);
   return _isInterrupted & 0x01;
 }
 
 /* set SPI mode */
-int ICM20689::setUseSPIHS(bool useSPIHS) {
+int ICM42688::setUseSPIHS(bool useSPIHS) {
   _useSPIHS = useSPIHS;
   return 1;
 }
 
-/* reads the most current data from ICM20689 and stores in buffer */
-int ICM20689::readSensor() {
+/* reads the most current data from ICM42688 and stores in buffer */
+int ICM42688::readSensor() {
   _useSPIHS = true; // use the high speed SPI for data readout
-  // grab the data from the ICM20689
+  // grab the data from the ICM42688
   if (readRegisters(ACCEL_OUT, 15, _buffer) < 0) {
     return -1;
   }
@@ -321,10 +321,10 @@ int ICM20689::readSensor() {
   return 1;
 }
 
-/* reads the most current acc data from ICM20689 */
-int ICM20689::readAcc(double* acc) {
+/* reads the most current acc data from ICM42688 */
+int ICM42688::readAcc(double* acc) {
   _useSPIHS = true; // use the high speed SPI for data readout
-  // grab the data from the ICM20689
+  // grab the data from the ICM42688
   if (readRegisters(ACCEL_OUT, 6, _buffer) < 0) {
     return -1;
   }
@@ -339,10 +339,10 @@ int ICM20689::readAcc(double* acc) {
   return 1;
 }
 
-/* reads the most current gyro data from ICM20689 */
-int ICM20689::readGyro(double* gyro) {
+/* reads the most current gyro data from ICM42688 */
+int ICM42688::readGyro(double* gyro) {
   _useSPIHS = true; // use the high speed SPI for data readout
-  // grab the data from the ICM20689
+  // grab the data from the ICM42688
   if (readRegisters(GYRO_OUT, 6, _buffer) < 0) {
     return -1;
   }
@@ -357,10 +357,10 @@ int ICM20689::readGyro(double* gyro) {
   return 1;
 }
 
-/* reads the most current accGyro data from ICM20689 */
-int ICM20689::readAccGyro(double* accGyro) {
+/* reads the most current accGyro data from ICM42688 */
+int ICM42688::readAccGyro(double* accGyro) {
   _useSPIHS = true; // use the high speed SPI for data readout
-  // grab the data from the ICM20689
+  // grab the data from the ICM42688
   if (readRegisters(ACCEL_OUT, 15, _buffer) < 0) {
     return -1;
   }
@@ -383,57 +383,57 @@ int ICM20689::readAccGyro(double* accGyro) {
 }
 
 /* returns the accelerometer measurement in the x direction, m/s/s */
-double ICM20689::getAccelX_mss() {
+double ICM42688::getAccelX_mss() {
   return _acc[0];
 }
 
 /* returns the accelerometer measurement in the y direction, m/s/s */
-double ICM20689::getAccelY_mss() {
+double ICM42688::getAccelY_mss() {
   return _acc[1];
 }
 
 /* returns the accelerometer measurement in the z direction, m/s/s */
-double ICM20689::getAccelZ_mss() {
+double ICM42688::getAccelZ_mss() {
   return _acc[2];
 }
 
 /* returns the gyroscope measurement in the x direction, rad/s */
-double ICM20689::getGyroX_rads() {
+double ICM42688::getGyroX_rads() {
   return _gyro[0];
 }
 
 /* returns the gyroscope measurement in the y direction, rad/s */
-double ICM20689::getGyroY_rads() {
+double ICM42688::getGyroY_rads() {
   return _gyro[1];
 }
 
 /* returns the gyroscope measurement in the z direction, rad/s */
-double ICM20689::getGyroZ_rads() {
+double ICM42688::getGyroZ_rads() {
   return _gyro[2];
 }
 
 /* returns the gyroscope measurement in the x direction, rad/s */
-double ICM20689::getGyroX_dps() {
+double ICM42688::getGyroX_dps() {
   return _gyro[0]*_r2d;
 }
 
 /* returns the gyroscope measurement in the y direction, rad/s */
-double ICM20689::getGyroY_dps() {
+double ICM42688::getGyroY_dps() {
   return _gyro[1]*_r2d;
 }
 
 /* returns the gyroscope measurement in the z direction, rad/s */
-double ICM20689::getGyroZ_dps() {
+double ICM42688::getGyroZ_dps() {
   return _gyro[2]*_r2d;
 }
 
 /* returns the die temperature, C */
-double ICM20689::getTemperature_C() {
+double ICM42688::getTemperature_C() {
   return _t;
 }
 
 /* configures and enables the FIFO buffer  */
-int ICM20689_FIFO::enableFifo(bool accel,bool gyro,bool temp) {
+int ICM42688_FIFO::enableFifo(bool accel,bool gyro,bool temp) {
   // use low speed SPI for register setting
   _useSPIHS = false;
   if(writeRegister(FIFO_EN,(accel*FIFO_ACCEL)|(gyro*FIFO_GYRO)|(temp*FIFO_TEMP)) < 0){
@@ -446,15 +446,15 @@ int ICM20689_FIFO::enableFifo(bool accel,bool gyro,bool temp) {
   return 1;
 }
 
-/* reads data from the ICM20689 FIFO and stores in buffer */
-int ICM20689_FIFO::readFifo() {
+/* reads data from the ICM42688 FIFO and stores in buffer */
+int ICM42688_FIFO::readFifo() {
   _useSPIHS = true; // use the high speed SPI for data readout
   // get the fifo size
   readRegisters(FIFO_COUNT, 2, _buffer);
   _fifoSize = (((uint16_t) (_buffer[0]&0x0F)) <<8) + (((uint16_t) _buffer[1]));
   // read and parse the buffer
   for (size_t i=0; i < _fifoSize/_fifoFrameSize; i++) {
-    // grab the data from the ICM20689
+    // grab the data from the ICM42688
     if (readRegisters(FIFO_READ,_fifoFrameSize,_buffer) < 0) {
       return -1;
     }
@@ -492,49 +492,49 @@ int ICM20689_FIFO::readFifo() {
 }
 
 /* returns the accelerometer FIFO size and data in the x direction, m/s/s */
-void ICM20689_FIFO::getFifoAccelX_mss(size_t *size,double* data) {
+void ICM42688_FIFO::getFifoAccelX_mss(size_t *size,double* data) {
   *size = _aSize;
   memcpy(data,_axFifo,_aSize*sizeof(double));
 }
 
 /* returns the accelerometer FIFO size and data in the y direction, m/s/s */
-void ICM20689_FIFO::getFifoAccelY_mss(size_t *size,double* data) {
+void ICM42688_FIFO::getFifoAccelY_mss(size_t *size,double* data) {
   *size = _aSize;
   memcpy(data,_ayFifo,_aSize*sizeof(double));
 }
 
 /* returns the accelerometer FIFO size and data in the z direction, m/s/s */
-void ICM20689_FIFO::getFifoAccelZ_mss(size_t *size,double* data) {
+void ICM42688_FIFO::getFifoAccelZ_mss(size_t *size,double* data) {
   *size = _aSize;
   memcpy(data,_azFifo,_aSize*sizeof(double));
 }
 
 /* returns the gyroscope FIFO size and data in the x direction, rad/s */
-void ICM20689_FIFO::getFifoGyroX_rads(size_t *size,double* data) {
+void ICM42688_FIFO::getFifoGyroX_rads(size_t *size,double* data) {
   *size = _gSize;
   memcpy(data,_gxFifo,_gSize*sizeof(double));
 }
 
 /* returns the gyroscope FIFO size and data in the y direction, rad/s */
-void ICM20689_FIFO::getFifoGyroY_rads(size_t *size,double* data) {
+void ICM42688_FIFO::getFifoGyroY_rads(size_t *size,double* data) {
   *size = _gSize;
   memcpy(data,_gyFifo,_gSize*sizeof(double));
 }
 
 /* returns the gyroscope FIFO size and data in the z direction, rad/s */
-void ICM20689_FIFO::getFifoGyroZ_rads(size_t *size,double* data) {
+void ICM42688_FIFO::getFifoGyroZ_rads(size_t *size,double* data) {
   *size = _gSize;
   memcpy(data,_gzFifo,_gSize*sizeof(double));
 }
 
 /* returns the die temperature FIFO size and data, C */
-void ICM20689_FIFO::getFifoTemperature_C(size_t *size,double* data) {
+void ICM42688_FIFO::getFifoTemperature_C(size_t *size,double* data) {
   *size = _tSize;
   memcpy(data,_tFifo,_tSize*sizeof(double));
 }
 
 /* estimates the gyro biases */
-int ICM20689::calibrateGyro() {
+int ICM42688::calibrateGyro() {
   // set the range, bandwidth, and srd
   if (setGyroRange(GYRO_RANGE_250DPS) < 0) {
     return -1;
@@ -575,39 +575,39 @@ int ICM20689::calibrateGyro() {
 }
 
 /* returns the gyro bias in the X direction, rad/s */
-double ICM20689::getGyroBiasX_rads() {
+double ICM42688::getGyroBiasX_rads() {
   return _gyroB[0];
 }
 
 /* returns the gyro bias in the Y direction, rad/s */
-double ICM20689::getGyroBiasY_rads() {
+double ICM42688::getGyroBiasY_rads() {
   return _gyroB[1];
 }
 
 /* returns the gyro bias in the Z direction, rad/s */
-double ICM20689::getGyroBiasZ_rads() {
+double ICM42688::getGyroBiasZ_rads() {
   return _gyroB[2];
 }
 
 /* sets the gyro bias in the X direction to bias, rad/s */
-void ICM20689::setGyroBiasX_rads(double bias) {
+void ICM42688::setGyroBiasX_rads(double bias) {
   _gyroB[0] = bias;
 }
 
 /* sets the gyro bias in the Y direction to bias, rad/s */
-void ICM20689::setGyroBiasY_rads(double bias) {
+void ICM42688::setGyroBiasY_rads(double bias) {
   _gyroB[1] = bias;
 }
 
 /* sets the gyro bias in the Z direction to bias, rad/s */
-void ICM20689::setGyroBiasZ_rads(double bias) {
+void ICM42688::setGyroBiasZ_rads(double bias) {
   _gyroB[2] = bias;
 }
 
 /* finds bias and scale factor calibration for the accelerometer,
 this should be run for each axis in each direction (6 total) to find
 the min and max values along each */
-int ICM20689::calibrateAccel() {
+int ICM42688::calibrateAccel() {
   // set the range, bandwidth, and srd
   if (setAccelRange(ACCEL_RANGE_2G) < 0) {
     return -1;
@@ -677,62 +677,62 @@ int ICM20689::calibrateAccel() {
 }
 
 /* returns the accelerometer bias in the X direction, m/s/s */
-double ICM20689::getAccelBiasX_mss() {
+double ICM42688::getAccelBiasX_mss() {
   return _accB[0];
 }
 
 /* returns the accelerometer scale factor in the X direction */
-double ICM20689::getAccelScaleFactorX() {
+double ICM42688::getAccelScaleFactorX() {
   return _accS[0];
 }
 
 /* returns the accelerometer bias in the Y direction, m/s/s */
-double ICM20689::getAccelBiasY_mss() {
+double ICM42688::getAccelBiasY_mss() {
   return _accB[1];
 }
 
 /* returns the accelerometer scale factor in the Y direction */
-double ICM20689::getAccelScaleFactorY() {
+double ICM42688::getAccelScaleFactorY() {
   return _accS[1];
 }
 
 /* returns the accelerometer bias in the Z direction, m/s/s */
-double ICM20689::getAccelBiasZ_mss() {
+double ICM42688::getAccelBiasZ_mss() {
   return _accB[2];
 }
 
 /* returns the accelerometer scale factor in the Z direction */
-double ICM20689::getAccelScaleFactorZ() {
+double ICM42688::getAccelScaleFactorZ() {
   return _accS[2];
 }
 
 /* sets the accelerometer bias (m/s/s) and scale factor in the X direction */
-void ICM20689::setAccelCalX(double bias,double scaleFactor) {
+void ICM42688::setAccelCalX(double bias,double scaleFactor) {
   _accB[0] = bias;
   _accS[0] = scaleFactor;
 }
 
 /* sets the accelerometer bias (m/s/s) and scale factor in the Y direction */
-void ICM20689::setAccelCalY(double bias,double scaleFactor) {
+void ICM42688::setAccelCalY(double bias,double scaleFactor) {
   _accB[1] = bias;
   _accS[1] = scaleFactor;
 }
 
 /* sets the accelerometer bias (m/s/s) and scale factor in the Z direction */
-void ICM20689::setAccelCalZ(double bias,double scaleFactor) {
+void ICM42688::setAccelCalZ(double bias,double scaleFactor) {
   _accB[2] = bias;
   _accS[2] = scaleFactor;
 }
 
-/* writes a byte to ICM20689 register given a register address and data */
-int ICM20689::writeRegister(uint8_t subAddress, uint8_t data){
+/* writes a byte to ICM42688 register given a register address and data */
+int ICM42688::writeRegister(uint8_t subAddress, uint8_t data){
   /* write data to device */
   if( _useSPI ){
     _spi->beginTransaction(SPISettings(SPI_LS_CLOCK, MSBFIRST, SPI_MODE3)); // begin the transaction
-    digitalWrite(_csPin,LOW); // select the ICM20689 chip
+    digitalWrite(_csPin,LOW); // select the ICM42688 chip
     _spi->transfer(subAddress); // write the register address
     _spi->transfer(data); // write the data
-    digitalWrite(_csPin,HIGH); // deselect the ICM20689 chip
+    digitalWrite(_csPin,HIGH); // deselect the ICM42688 chip
     _spi->endTransaction(); // end the transaction
   }
   else{
@@ -755,8 +755,8 @@ int ICM20689::writeRegister(uint8_t subAddress, uint8_t data){
   }
 }
 
-/* reads registers from ICM20689 given a starting register address, number of bytes, and a pointer to store data */
-int ICM20689::readRegisters(uint8_t subAddress, uint8_t count, uint8_t* dest){
+/* reads registers from ICM42688 given a starting register address, number of bytes, and a pointer to store data */
+int ICM42688::readRegisters(uint8_t subAddress, uint8_t count, uint8_t* dest){
   if( _useSPI ){
     // begin the transaction
     if(_useSPIHS){
@@ -765,12 +765,12 @@ int ICM20689::readRegisters(uint8_t subAddress, uint8_t count, uint8_t* dest){
     else{
       _spi->beginTransaction(SPISettings(SPI_LS_CLOCK, MSBFIRST, SPI_MODE3));
     }
-    digitalWrite(_csPin,LOW); // select the ICM20689 chip
+    digitalWrite(_csPin,LOW); // select the ICM42688 chip
     _spi->transfer(subAddress | SPI_READ); // specify the starting register address
     for(uint8_t i = 0; i < count; i++){
       dest[i] = _spi->transfer(0x00); // read the data
     }
-    digitalWrite(_csPin,HIGH); // deselect the ICM20689 chip
+    digitalWrite(_csPin,HIGH); // deselect the ICM42688 chip
     _spi->endTransaction(); // end the transaction
     return 1;
   }
@@ -790,8 +790,8 @@ int ICM20689::readRegisters(uint8_t subAddress, uint8_t count, uint8_t* dest){
   }
 }
 
-/* gets the ICM20689 WHO_AM_I register value, expected to be 0x98 */
-int ICM20689::whoAmI(){
+/* gets the ICM42688 WHO_AM_I register value, expected to be 0x98 */
+int ICM42688::whoAmI(){
   // read the WHO AM I register
   if (readRegisters(WHO_AM_I,1,_buffer) < 0) {
     return -1;

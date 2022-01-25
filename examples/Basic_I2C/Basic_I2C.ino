@@ -1,7 +1,7 @@
-#include "ICM20689.h"
+#include "ICM42688.h"
 
-// an ICM20689 object with the ICM20689 sensor on I2C bus 0 with address 0x68
-ICM20689 IMU(Wire,0x68);
+// an ICM42688 object with the ICM42688 sensor on I2C bus 0 with address 0x68
+ICM42688 IMU(Wire,0x68);
 int status;
 
 void setup() {

@@ -1,11 +1,11 @@
-#ifndef ICM20689_H
-#define ICM20689_H
+#ifndef ICM42688_H
+#define ICM42688_H
 
 #include "Arduino.h"
 #include "Wire.h"    // I2C library
 #include "SPI.h"     // SPI library
 
-class ICM20689{
+class ICM42688{
   public:
     enum GyroRange
     {
@@ -31,8 +31,8 @@ class ICM20689{
       DLPF_BANDWIDTH_10HZ, // A_DLPF_CFG 5
       DLPF_BANDWIDTH_5HZ // A_DLPF_CFG 6
     };
-    ICM20689(TwoWire &bus,uint8_t address);
-    ICM20689(SPIClass &bus,uint8_t csPin);
+    ICM42688(TwoWire &bus,uint8_t address);
+    ICM42688(SPIClass &bus,uint8_t csPin);
     int begin();
     int setAccelRange(AccelRange range);
     int setGyroRange(GyroRange range);
@@ -127,7 +127,7 @@ class ICM20689{
     const double G = 9.807f;
     const double _d2r = 3.14159265359f/180.0f;
     const double _r2d = 180.0f/3.14159265359f;
-    // ICM20689 registers
+    // ICM42688 registers
     const uint8_t ACCEL_OUT = 0x3B;
     const uint8_t GYRO_OUT = 0x43;
     const uint8_t TEMP_OUT = 0x41;
@@ -193,9 +193,9 @@ class ICM20689{
     int whoAmI();
 };
 
-class ICM20689_FIFO: public ICM20689 {
+class ICM42688_FIFO: public ICM42688 {
   public:
-    using ICM20689::ICM20689;
+    using ICM42688::ICM42688;
     int enableFifo(bool accel,bool gyro,bool temp);
     int readFifo();
     void getFifoAccelX_mss(size_t *size,double* data);
@@ -224,4 +224,4 @@ class ICM20689_FIFO: public ICM20689 {
     size_t _tSize = 0;
 };
 
-#endif // ICM20689_H
+#endif // ICM42688_H

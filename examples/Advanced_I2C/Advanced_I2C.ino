@@ -1,7 +1,7 @@
-#include "ICM20689.h"
+#include "ICM42688.h"
 
-// an ICM20689 object with the ICM20689 sensor on I2C bus 0 with address 0x68
-ICM20689 IMU(Wire,0x68);
+// an ICM42688 object with the ICM42688 sensor on I2C bus 0 with address 0x68
+ICM42688 IMU(Wire,0x68);
 int status;
 
 void setup() {
@@ -19,11 +19,11 @@ void setup() {
     while(1) {}
   }
   // setting the accelerometer full scale range to +/-8G
-  IMU.setAccelRange(ICM20689::ACCEL_RANGE_8G);
+  IMU.setAccelRange(ICM42688::ACCEL_RANGE_8G);
   // setting the gyroscope full scale range to +/-500 deg/s
-  IMU.setGyroRange(ICM20689::GYRO_RANGE_500DPS);
+  IMU.setGyroRange(ICM42688::GYRO_RANGE_500DPS);
   // setting DLPF bandwidth to 20 Hz
-  IMU.setDlpfBandwidth(ICM20689::DLPF_BANDWIDTH_21HZ);
+  IMU.setDlpfBandwidth(ICM42688::DLPF_BANDWIDTH_21HZ);
   // setting SRD to 19 for a 50 Hz update rate
   IMU.setSrd(19);
   Serial.println("ax,ay,az,gx,gy,gz,temp_C");

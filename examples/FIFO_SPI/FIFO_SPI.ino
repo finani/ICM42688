@@ -1,7 +1,7 @@
-#include "ICM20689.h"
+#include "ICM42688.h"
 
-// an ICM20689 object with the ICM20689 sensor on SPI bus 0 and chip select pin 10
-ICM20689FIFO IMU(SPI,10);
+// an ICM42688 object with the ICM42688 sensor on SPI bus 0 and chip select pin 10
+ICM42688FIFO IMU(SPI,10);
 int status;
 
 // variables to hold FIFO data, these need to be large enough to hold the data
@@ -23,7 +23,7 @@ void setup() {
     while(1) {}
   }
   // setting DLPF bandwidth to 20 Hz
-  IMU.setDlpfBandwidth(ICM20689::DLPF_BANDWIDTH_21HZ);
+  IMU.setDlpfBandwidth(ICM42688::DLPF_BANDWIDTH_21HZ);
   // setting SRD to 19 for a 50 Hz update rate
   IMU.setSrd(19);
   // enabling the FIFO to record just the accelerometers

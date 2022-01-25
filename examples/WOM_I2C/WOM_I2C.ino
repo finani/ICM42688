@@ -1,7 +1,7 @@
-#include "ICM20689.h"
+#include "ICM42688.h"
 
-// an ICM20689 object with the ICM20689 sensor on I2C bus 0 with address 0x68
-ICM20689 IMU(Wire,0x68);
+// an ICM42688 object with the ICM42688 sensor on I2C bus 0 with address 0x68
+ICM42688 IMU(Wire,0x68);
 int status;
 
 void setup() {
@@ -20,7 +20,7 @@ void setup() {
   }
   // enabling wake on motion low power mode with a threshold of 400 mg and
   // an accelerometer data rate of 15.63 Hz.
-  IMU.enableWakeOnMotion(400,ICM20689::LP_ACCEL_ODR_15_63HZ);
+  IMU.enableWakeOnMotion(400,ICM42688::LP_ACCEL_ODR_15_63HZ);
   // attaching the interrupt to microcontroller pin 1
   pinMode(1,INPUT);
   attachInterrupt(1,wakeUp,RISING);

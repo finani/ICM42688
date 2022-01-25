@@ -1,7 +1,7 @@
-#include "ICM20689.h"
+#include "ICM42688.h"
 
-// an ICM20689 object with the ICM20689 sensor on SPI bus 0 and chip select pin 10
-ICM20689 IMU(SPI,10);
+// an ICM42688 object with the ICM42688 sensor on SPI bus 0 and chip select pin 10
+ICM42688 IMU(SPI,10);
 int status;
 
 void setup() {
