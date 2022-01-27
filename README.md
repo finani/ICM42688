@@ -1,5 +1,5 @@
 # ICM42688
-Arduino library for communicating with the [ICM42688](https://invensense.tdk.com/products/motion-tracking/6-axis/icm-20689/) six-axis Inertial Measurement Units (IMU).
+Arduino library for communicating with the [ICM42688](https://invensense.tdk.com/products/motion-tracking/6-axis/icm-42688-p/) six-axis Inertial Measurement Units (IMU).
 
 # Description
 The InvenSense ICM42688 supports I2C, up to 400 kHz, and SPI communication, up to 1 MHz for register setup and 8 MHz for data reading. The following selectable full scale sensor ranges are available:
@@ -481,9 +481,7 @@ IMU.getFifoTemperature_C(&samples,temp);
 ```
 
 ## <a name="sensor-orientation"></a>Sensor Orientation
-This library transforms all data to a common axis system before it is returned. This axis system is shown below. It is a right handed coordinate system with the z-axis positive down, common in aircraft dynamics.
-
-<img src="https://github.com/finani/ICM42688/blob/master/extras/image_1578129299923_1000.jpg" alt="Common Axis System" width="250">
+This library transforms all data to a common axis system before it is returned. It is a right handed coordinate system with the z-axis positive down, common in aircraft dynamics.
 
 **Caution!** This axis system is shown relative to the ICM42688 sensor. The sensor may be rotated relative to the breakout board.
 
@@ -498,7 +496,7 @@ This library transforms all data to a common axis system before it is returned. 
 
 # Wiring and Pullups
 
-Please refer to the [ICM42688 datasheet](https://github.com/finani/ICM42688/blob/master/extras/InvenSense-ICM-20689-datasheet.pdf). This library should work well for other breakout boards or embedded sensors, please refer to your vendor's pinout diagram.
+Please refer to the [ICM42688 datasheet](https://github.com/finani/ICM42688/blob/master/extras/InvenSense-ICM-42688-P-datasheet.pdf). This library should work well for other breakout boards or embedded sensors, please refer to your vendor's pinout diagram.
 
 ## I2C
 
