@@ -9,35 +9,28 @@ class ICM42688{
   public:
     enum GyroRange
     {
-      GYRO_RANGE_250DPS, // FS_SEL[1:0] 00
-      GYRO_RANGE_500DPS, // FS_SEL[1:0] 01
-      GYRO_RANGE_1000DPS, // FS_SEL[1:0] 10
-      GYRO_RANGE_2000DPS // FS_SEL[1:0] 11
+      GYRO_RANGE_15_625DPS,
+      GYRO_RANGE_31_25DPS,
+      GYRO_RANGE_62_5DPS,
+      GYRO_RANGE_125DPS,
+      GYRO_RANGE_250DPS,
+      GYRO_RANGE_500DPS,
+      GYRO_RANGE_1000DPS,
+      GYRO_RANGE_2000DPS
     };
     enum AccelRange
     {
-      ACCEL_RANGE_2G, // ACCEL_FS_SEL[1:0] 00
-      ACCEL_RANGE_4G, // ACCEL_FS_SEL[1:0] 01
-      ACCEL_RANGE_8G, // ACCEL_FS_SEL[1:0] 10
-      ACCEL_RANGE_16G // ACCEL_FS_SEL[1:0] 11
-    };
-    enum DlpfBandwidth
-    {
-      DLPF_BANDWIDTH_MAX,
-      DLPF_BANDWIDTH_218HZ, // A_DLPF_CFG 0, 1
-      DLPF_BANDWIDTH_99HZ, // A_DLPF_CFG 2
-      DLPF_BANDWIDTH_45HZ, // A_DLPF_CFG 3
-      DLPF_BANDWIDTH_21HZ, // A_DLPF_CFG 4
-      DLPF_BANDWIDTH_10HZ, // A_DLPF_CFG 5
-      DLPF_BANDWIDTH_5HZ // A_DLPF_CFG 6
+      ACCEL_RANGE_2G,
+      ACCEL_RANGE_4G,
+      ACCEL_RANGE_8G,
+      ACCEL_RANGE_16G
     };
     ICM42688(TwoWire &bus,uint8_t address);
     ICM42688(SPIClass &bus,uint8_t csPin);
     int begin();
     int setAccelRange(AccelRange range);
     int setGyroRange(GyroRange range);
-    int setDlpfBandwidth(DlpfBandwidth bandwidth);
-    int setSrd(uint8_t srd);
+    int setFilters(bool gyro, bool acc);
     int enableDataReadyInterrupt();
     int disableDataReadyInterrupt();
     uint8_t isInterrupted();
@@ -107,8 +100,6 @@ class ICM42688{
     // configuration
     AccelRange _accelRange;
     GyroRange _gyroRange;
-    DlpfBandwidth _bandwidth;
-    uint8_t _srd = 0;
     // gyro bias estimation
     size_t _numSamples = 100;
     double _gyroBD[3] = {};
@@ -128,65 +119,96 @@ class ICM42688{
     const double _d2r = 3.14159265359f/180.0f;
     const double _r2d = 180.0f/3.14159265359f;
     // ICM42688 registers
-    const uint8_t ACCEL_OUT = 0x3B;
-    const uint8_t GYRO_OUT = 0x43;
-    const uint8_t TEMP_OUT = 0x41;
-    const uint8_t ACCEL_CONFIG = 0x1C;
-    const uint8_t ACCEL_FS_SEL_2G = 0x00;
-    const uint8_t ACCEL_FS_SEL_4G = 0x08;
-    const uint8_t ACCEL_FS_SEL_8G = 0x10;
-    const uint8_t ACCEL_FS_SEL_16G = 0x18;
-    const uint8_t GYRO_CONFIG = 0x1B;
-    const uint8_t GYRO_FS_SEL_250DPS = 0x00;
-    const uint8_t GYRO_FS_SEL_500DPS = 0x08;
-    const uint8_t GYRO_FS_SEL_1000DPS = 0x10;
-    const uint8_t GYRO_FS_SEL_2000DPS = 0x18;
-    const uint8_t GYRO_FCHOICE_B_8173HZ = 0x01;
-    const uint8_t GYRO_FCHOICE_B_3281HZ = 0x10;
-    const uint8_t ACCEL_CONFIG2 = 0x1D;
-    const uint8_t ACCEL_DLPF_218HZ = 0x01;
-    const uint8_t ACCEL_DLPF_99HZ = 0x02;
-    const uint8_t ACCEL_DLPF_45HZ = 0x03;
-    const uint8_t ACCEL_DLPF_21HZ = 0x04;
-    const uint8_t ACCEL_DLPF_10HZ = 0x05;
-    const uint8_t ACCEL_DLPF_5HZ = 0x06;
-    const uint8_t ACCEL_DLPF_420HZ = 0x07;
-    const uint8_t ACCEL_DLPF_1046HZ = 0x08;
-    const uint8_t CONFIG = 0x1A;
-    const uint8_t GYRO_DLPF_250HZ = 0x00;
-    const uint8_t GYRO_DLPF_176HZ = 0x01;
-    const uint8_t GYRO_DLPF_92HZ = 0x02;
-    const uint8_t GYRO_DLPF_41HZ = 0x03;
-    const uint8_t GYRO_DLPF_20HZ = 0x04;
-    const uint8_t GYRO_DLPF_10HZ = 0x05;
-    const uint8_t GYRO_DLPF_5HZ = 0x06;
-    const uint8_t SMPLRT_DIV = 0x19;
-    const uint8_t INT_PIN_CFG = 0x37;
-    const uint8_t INT_ENABLE = 0x38;
-    const uint8_t INT_DISABLE = 0x00;
-    const uint8_t INT_HOLD_ANY = 0x30;
-    const uint8_t INT_PULSE_50US = 0x00;
-    const uint8_t INT_WOM_EN = 0x40;
-    const uint8_t INT_RAW_RDY_EN = 0x01;
-    const uint8_t INT_STATUS = 0x3A;
-    const uint8_t PWR_MGMNT_1 = 0x6B;
-    const uint8_t PWR_CYCLE = 0x20;
+    // BANK 0
+    const uint8_t ACCEL_OUT = 0x1F;
+    const uint8_t GYRO_OUT = 0x25;
+    const uint8_t TEMP_OUT = 0x1D;
+
+    const uint8_t ACCEL_CONFIG0 = 0x50;
+    const uint8_t ACCEL_FS_SEL_2G = 0x80; // TODO: 0x60 in datasheet
+    const uint8_t ACCEL_FS_SEL_4G = 0x60; // TODO: 0x40 in datasheet
+    const uint8_t ACCEL_FS_SEL_8G = 0x40; // TODO: 0x20 in datasheet
+    const uint8_t ACCEL_FS_SEL_16G = 0x20; // TODO: 0x00 in datasheet
+    const uint8_t ACCEL_ODR_32KHZ = 0x01;
+    const uint8_t ACCEL_ODR_16KHZ = 0x02;
+    const uint8_t ACCEL_ODR_8KHZ = 0x03;
+    const uint8_t ACCEL_ODR_4KHZ = 0x04;
+    const uint8_t ACCEL_ODR_2KHZ = 0x05;
+    const uint8_t ACCEL_ODR_1KHZ = 0x06;
+    const uint8_t ACCEL_ODR_200HZ = 0x07;
+    const uint8_t ACCEL_ODR_100HZ = 0x08;
+    const uint8_t ACCEL_ODR_50HZ = 0x09;
+    const uint8_t ACCEL_ODR_25HZ = 0x0A;
+    const uint8_t ACCEL_ODR_12_5HZ = 0x0B;
+    const uint8_t ACCEL_ODR_6_25HZ = 0x0C;
+    const uint8_t ACCEL_ODR_3_125HZ = 0x0D;
+    const uint8_t ACCEL_ODR_1_5625HZ = 0x0E;
+    const uint8_t ACCEL_ODR_500HZ = 0x0F;
+
+    const uint8_t GYRO_CONFIG0 = 0x4F;
+    const uint8_t GYRO_FS_SEL_15_625DPS = 0xE0;
+    const uint8_t GYRO_FS_SEL_31_25DPS = 0xC0;
+    const uint8_t GYRO_FS_SEL_62_5DPS = 0xA0;
+    const uint8_t GYRO_FS_SEL_125DPS = 0x80;
+    const uint8_t GYRO_FS_SEL_250DPS = 0x60;
+    const uint8_t GYRO_FS_SEL_500DPS = 0x40;
+    const uint8_t GYRO_FS_SEL_1000DPS = 0x20;
+    const uint8_t GYRO_FS_SEL_2000DPS = 0x00;
+    const uint8_t GYRO_ODR_32KHZ = 0x01;
+    const uint8_t GYRO_ODR_16KHZ = 0x02;
+    const uint8_t GYRO_ODR_8KHZ = 0x03;
+    const uint8_t GYRO_ODR_4KHZ = 0x04;
+    const uint8_t GYRO_ODR_2KHZ = 0x05;
+    const uint8_t GYRO_ODR_1KHZ = 0x06;
+    const uint8_t GYRO_ODR_200HZ = 0x07;
+    const uint8_t GYRO_ODR_100HZ = 0x08;
+    const uint8_t GYRO_ODR_50HZ = 0x09;
+    const uint8_t GYRO_ODR_25HZ = 0x0A;
+    const uint8_t GYRO_ODR_12_5HZ = 0x0B;
+    const uint8_t GYRO_ODR_500HZ = 0x0F;
+
+    const uint8_t INT_CONFIG = 0x14;
+    const uint8_t INT_HOLD_ANY = 0x08;
+    const uint8_t INT_PULSE_100us = 0x03;
+    const uint8_t INT_SOURCE0 = 0x65;
+    const uint8_t RESET_DONE_INT1_EN = 0x10;
+    const uint8_t UI_DRDY_INT1_EN = 0x10;
+    const uint8_t INT_STATUS = 0x2D;
+
+    const uint8_t DEVICE_CONFIG = 0x11;
     const uint8_t PWR_RESET = 0x80;
+    const uint8_t INTF_CONFIG1 = 0x4D;
     const uint8_t CLOCK_SEL_PLL = 0x01;
-    const uint8_t PWR_MGMNT_2 = 0x6C;
-    const uint8_t SEN_ENABLE = 0x00;
-    const uint8_t DIS_GYRO = 0x07;
-    const uint8_t DIS_ACC = 0x38;
-    const uint8_t MOT_DETECT_CTRL = 0x69;
-    const uint8_t ACCEL_INTEL_EN = 0x80;
-    const uint8_t ACCEL_INTEL_MODE = 0x40;
+    const uint8_t PWR_MGMT0 = 0x4E;
+    const uint8_t SEN_ENABLE = 0x0F;
+
     const uint8_t WHO_AM_I = 0x75;
     const uint8_t FIFO_EN = 0x23;
-    const uint8_t FIFO_TEMP = 0x80;
-    const uint8_t FIFO_GYRO = 0x70;
-    const uint8_t FIFO_ACCEL = 0x08;
-    const uint8_t FIFO_COUNT = 0x72;
-    const uint8_t FIFO_READ = 0x74;
+    const uint8_t FIFO_TEMP_EN = 0x04;
+    const uint8_t FIFO_GYRO = 0x02;
+    const uint8_t FIFO_ACCEL = 0x01;
+    const uint8_t FIFO_COUNT = 0x2E;
+    const uint8_t FIFO_DATA = 0x30;
+
+    const uint8_t BANK_SEL = 0x76;
+    const uint8_t BANK0 = 0x00;
+    const uint8_t BANK1 = 0x01;
+    const uint8_t BANK2 = 0x02;
+    const uint8_t BANK3 = 0x03;
+    const uint8_t BANK4 = 0x04;
+
+    // BANK 1
+    const uint8_t GYRO_CONFIG_STATIC2 = 0x0B;
+    const uint8_t GYRO_NF_ENABLE = 0x00;
+    const uint8_t GYRO_NF_DISABLE = 0x01;
+    const uint8_t GYRO_AAF_ENABLE = 0x00;
+    const uint8_t GYRO_AAF_DISABLE = 0x02;
+
+    // BANK 2
+    const uint8_t ACCEL_CONFIG_STATIC2 = 0x03;
+    const uint8_t ACCEL_AAF_ENABLE = 0x00;
+    const uint8_t ACCEL_AAF_DISABLE = 0x01;
+
     // private functions
     int writeRegister(uint8_t subAddress, uint8_t data);
     int readRegisters(uint8_t subAddress, uint8_t count, uint8_t* dest);

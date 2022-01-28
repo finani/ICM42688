@@ -1,4 +1,5 @@
 #include "ICM42688.h"
+// TODO: Need to test this with the ICM42688
 
 // an ICM42688 object with the ICM42688 sensor on SPI bus 0 and chip select pin 10
 ICM42688 IMU(SPI,10);

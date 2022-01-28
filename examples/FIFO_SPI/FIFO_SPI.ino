@@ -1,11 +1,12 @@
 #include "ICM42688.h"
+// TODO: Need to test this with the ICM42688
 
 // an ICM42688 object with the ICM42688 sensor on SPI bus 0 and chip select pin 10
-ICM42688FIFO IMU(SPI,10);
+ICM42688_FIFO IMU(SPI,10);
 int status;
 
 // variables to hold FIFO data, these need to be large enough to hold the data
-float ax[100], ay[100], az[100];
+double ax[100], ay[100], az[100];
 size_t fifoSize;
 
 void setup() {
