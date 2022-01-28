@@ -194,11 +194,11 @@ int ICM42688::setGyroRange(GyroRange range) {
   return 1;
 }
 
-int ICM42688::setFilters(bool gyro, bool acc) {
+int ICM42688::setFilters(bool gyroFilters, bool accFilters) {
   if (writeRegister(BANK_SEL, BANK1) < 0) {
     return -1;
   }
-  if (gyro == true) {
+  if (gyroFilters == true) {
     if (writeRegister(GYRO_CONFIG_STATIC2, GYRO_NF_ENABLE | GYRO_AAF_ENABLE) < 0) {
       return -2;
     }
@@ -211,7 +211,7 @@ int ICM42688::setFilters(bool gyro, bool acc) {
   if (writeRegister(BANK_SEL, BANK2) < 0) {
     return -4;
   }
-  if (acc == true) {
+  if (accFilters == true) {
     if (writeRegister(ACCEL_CONFIG_STATIC2, ACCEL_AAF_ENABLE) < 0) {
       return -5;
     }

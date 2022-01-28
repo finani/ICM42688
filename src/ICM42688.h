@@ -30,7 +30,7 @@ class ICM42688{
     int begin();
     int setAccelRange(AccelRange range);
     int setGyroRange(GyroRange range);
-    int setFilters(bool gyro, bool acc);
+    int setFilters(bool gyroFilters, bool accFilters);
     int enableDataReadyInterrupt();
     int disableDataReadyInterrupt();
     uint8_t isInterrupted();

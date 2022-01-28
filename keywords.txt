@@ -3,8 +3,7 @@ ICM42688FIFO	KEYWORD1
 begin	KEYWORD2
 setAccelRange	KEYWORD2
 setGyroRange	KEYWORD2
-setDlpfBandwidth	KEYWORD2
-setSrd	KEYWORD2
+setFilters	KEYWORD2
 enableDataReadyInterrupt	KEYWORD2
 disableDataReadyInterrupt	KEYWORD2
 isInterrupted	KEYWORD2

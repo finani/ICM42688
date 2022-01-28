@@ -87,36 +87,15 @@ This function returns a positive value on success and a negative value on failur
 status = IMU.setGyroRange(ICM42688::GYRO_RANGE_250DPS);
 ```
 
-**(optional) int setDlpfBandwidth(DlpfBandwidth bandwidth)**
-This is an optional function to set the programmable Digital Low Pass Filter (DLPF) bandwidth. By default, if this function is not called, a DLPF bandwidth of 184 Hz is used. The following DLPF bandwidths are supported:
+**(optional) int setFilters(bool gyroFilters, bool accFilters)**
+This is an optional function to set the programmable Filters (Notch Filter, Anti-Alias Filter, UI Filter Block). By default, All filters are turn on. The following figure shows a block diagram of the signal path for ICM42688:
 
-| Bandwidth Name | ACC Bandwidth | Gyroscope Bandwidth | Temperature Bandwidth |
-| --- | --- | --- | --- |
-| DLPF_BANDWIDTH_MAX   | 1046 Hz | 8173 Hz | 4000 Hz |
-| DLPF_BANDWIDTH_218HZ | 218 Hz  | 250 Hz  | 188 Hz  |
-| DLPF_BANDWIDTH_99HZ  | 99 Hz   | 92 Hz   | 98 Hz   |
-| DLPF_BANDWIDTH_45HZ  | 45 Hz   | 41 Hz   | 42 Hz   |
-| DLPF_BANDWIDTH_21HZ  | 21 Hz   | 20 Hz   | 20 Hz   |
-| DLPF_BANDWIDTH_10HZ  | 10 Hz   | 10 Hz   | 10 Hz   |
-| DLPF_BANDWIDTH_5HZ   | 5 Hz    | 5 Hz    | 5 Hz    |
+<img src="https://github.com/finani/ICM42688/blob/master/extras/signal_path.png" alt="Signal Path" width="800">
 
-This function returns a positive value on success and a negative value on failure. Please see the *Advanced_I2C example*. The following is an example of selecting a DLPF bandwidth of 20 Hz.
+This function returns a positive value on success and a negative value on failure. The following is an example of turning the filters on.
 
 ```C++
-status = IMU.setDlpfBandwidth(ICM42688::DLPF_BANDWIDTH_20HZ);
-```
-
-**(optional) int setSrd(uint8_t srd)**
-This is an optional function to set the data output rate. The data output rate is set by a sample rate divider, *uint8_t SRD*. The data output rate is then given by:
-
-*Data Output Rate = 1000 / (1 + SRD)*
-
-By default, if this function is not called, an SRD of 0 is used resulting in a data output rate of 1000 Hz. This allows the data output rate for the gyroscopes, accelerometers, and temperature sensor to be set between 3.9 Hz and 1000 Hz. Note that data should be read at or above the selected rate. In order to prevent aliasing, the data should be sampled at twice the frequency of the DLPF bandwidth or higher. For example, this means for a DLPF bandwidth set to 41 Hz, the data output rate and data collection should be at frequencies of 82 Hz or higher.
-
-This function returns a positive value on success and a negative value on failure. Please see the *Advanced_I2C example*. The following is an example of selecting an SRD of 9, resulting in a data output rate of 100 Hz.
-
-```C++
-status = IMU.setSrd(9);
+status = IMU.setFilters(true, true);
 ```
 
 **(optional) int enableDataReadyInterrupt()**
@@ -501,33 +480,23 @@ Please refer to the [ICM42688 datasheet](https://github.com/finani/ICM42688/blob
 ## I2C
 
 The ICM42688 pins should be connected as:
-   * VDD: this should be a 2.4V to 3.6V power source.
+   * 3V3: this should be a 3.0V to 3.6V power source.
    * GND: ground.
-   * VDDI: digital I/O supply voltage. This should be between 1.71V and VDD.
-   * FSYNC: not used, should be grounded.
    * INT: (optional) used for the interrupt output setup in *enableDataReadyInterrupt* and *enableWakeOnMotion*. Connect to interruptable pin on microcontroller.
-   * SDA / SDI: connect to SDA.
-   * SCL / SCLK: connect to SCL.
-   * AD0 / SDO: ground to select I2C address 0x68. Pull high to VDD to select I2C address 0x69.
-   * nCS: no connect.
-   * AUXDA: not used.
-   * AUXCL: not used.
+   * SDA: connect to SDA.
+   * SCL: connect to SCL.
 
 4.7 kOhm resistors should be used as pullups on SDA and SCL, these resistors should pullup with a 3.3V source.
 
 ## SPI
 
 The ICM42688 pins should be connected as:
-   * VDD: this should be a 2.4V to 3.6V power source.
+   * 3V3: this should be a 3.0V to 3.6V power source.
    * GND: ground.
-   * VDDI: digital I/O supply voltage. This should be between 1.71V and VDD.
-   * FSYNC: not used, should be grounded.
    * INT: (optional) used for the interrupt output setup in *enableDataReadyInterrupt* and *enableWakeOnMotion*. Connect to interruptable pin on microcontroller.
-   * SDA / SDI: connect to MOSI.
-   * SCL / SCLK: connect to SCK.
-   * AD0 / SDO: connect to MISO.
-   * nCS: connect to chip select pin. Pin 10 was used in the code snippets in this document and the included examples, but any digital I/O pin can be used.
-   * AUXDA: not used.
-   * AUXCL: not used.
+   * SDI: connect to MOSI.
+   * SCK: connect to SCK.
+   * SDO: connect to MISO.
+   * CS: connect to chip select pin. Pin 10 was used in the code snippets in this document and the included examples, but any digital I/O pin can be used.
 
 Some breakout boards, including the Embedded Masters breakout board, require slight modification to enable SPI. Please refer to your vendor's documentation.
