@@ -125,10 +125,10 @@ class ICM42688{
     const uint8_t TEMP_OUT = 0x1D;
 
     const uint8_t ACCEL_CONFIG0 = 0x50;
-    const uint8_t ACCEL_FS_SEL_2G = 0x80; // TODO: 0x60 in datasheet
-    const uint8_t ACCEL_FS_SEL_4G = 0x60; // TODO: 0x40 in datasheet
-    const uint8_t ACCEL_FS_SEL_8G = 0x40; // TODO: 0x20 in datasheet
-    const uint8_t ACCEL_FS_SEL_16G = 0x20; // TODO: 0x00 in datasheet
+    const uint8_t ACCEL_FS_SEL_2G = 0x60;
+    const uint8_t ACCEL_FS_SEL_4G = 0x40;
+    const uint8_t ACCEL_FS_SEL_8G = 0x20;
+    const uint8_t ACCEL_FS_SEL_16G = 0x00;
     const uint8_t ACCEL_ODR_32KHZ = 0x01;
     const uint8_t ACCEL_ODR_16KHZ = 0x02;
     const uint8_t ACCEL_ODR_8KHZ = 0x03;
@@ -176,11 +176,8 @@ class ICM42688{
     const uint8_t INT_STATUS = 0x2D;
 
     const uint8_t DEVICE_CONFIG = 0x11;
-    const uint8_t PWR_RESET = 0x80;
     const uint8_t INTF_CONFIG1 = 0x4D;
-    const uint8_t CLOCK_SEL_PLL = 0x01;
     const uint8_t PWR_MGMT0 = 0x4E;
-    const uint8_t SEN_ENABLE = 0x0F;
 
     const uint8_t WHO_AM_I = 0x75;
     const uint8_t FIFO_EN = 0x23;
