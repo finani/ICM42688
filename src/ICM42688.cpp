@@ -1,5 +1,8 @@
 #include "Arduino.h"
 #include "ICM42688.h"
+#include "registers.h"
+
+using namespace ICM42688reg;
 
 /* ICM42688 object, input the I2C bus and address */
 ICM42688::ICM42688(TwoWire &bus,uint8_t address) {
@@ -34,9 +37,7 @@ int ICM42688::begin() {
   }
 
   // reset the ICM42688
-  writeRegister(DEVICE_CONFIG, 0x01);
-  // wait for ICM42688 to come back up
-  delay(1);
+  reset();
 
   // check the WHO AM I byte, expected value is 0x47 (decimal 71)
   if(whoAmI() != 71) {
@@ -44,18 +45,18 @@ int ICM42688::begin() {
   }
 
   // turn on accel and gyro in Low Noise (LN) Mode
-  if(writeRegister(PWR_MGMT0, 0x0F) < 0) {
+  if(writeRegister(UB0_REG_PWR_MGMT0, 0x0F) < 0) {
     return -4;
   }
 
   // setting accel range to 16G and 32kHz as default
-  if(writeRegister(ACCEL_CONFIG0,ACCEL_FS_SEL_16G | ACCEL_ODR_32KHZ) < 0) {
+  if(writeRegister(UB0_REG_ACCEL_CONFIG0, ACCEL_FS_SEL_16G | ACCEL_ODR_32KHZ) < 0) {
     return -5;
   }
   _accelScale = G * 16.0f/32767.5f; // setting the accel scale to 16G
   _accelRange = ACCEL_RANGE_16G;
   // setting the gyro range to 2000DPS and 32kHz as default
-  if(writeRegister(GYRO_CONFIG0,GYRO_FS_SEL_2000DPS | GYRO_ODR_32KHZ) < 0) {
+  if(writeRegister(UB0_REG_GYRO_CONFIG0, GYRO_FS_SEL_2000DPS | GYRO_ODR_32KHZ) < 0) {
     return -6;
   }
   _gyroScale = 2000.0f/32767.5f * _d2r; // setting the gyro scale to 2000DPS
@@ -81,7 +82,7 @@ int ICM42688::setAccelRange(AccelRange range) {
   switch(range) {
     case ACCEL_RANGE_2G: {
       // setting the accel range to 2G
-      if(writeRegister(ACCEL_CONFIG0,ACCEL_FS_SEL_2G) < 0) {
+      if(writeRegister(UB0_REG_ACCEL_CONFIG0, ACCEL_FS_SEL_2G) < 0) {
         return -1;
       }
       _accelScale = G * 2.0f/32767.5f; // setting the accel scale to 2G
@@ -89,7 +90,7 @@ int ICM42688::setAccelRange(AccelRange range) {
     }
     case ACCEL_RANGE_4G: {
       // setting the accel range to 4G
-      if(writeRegister(ACCEL_CONFIG0,ACCEL_FS_SEL_4G) < 0) {
+      if(writeRegister(UB0_REG_ACCEL_CONFIG0, ACCEL_FS_SEL_4G) < 0) {
         return -1;
       }
       _accelScale = G * 4.0f/32767.5f; // setting the accel scale to 4G
@@ -97,7 +98,7 @@ int ICM42688::setAccelRange(AccelRange range) {
     }
     case ACCEL_RANGE_8G: {
       // setting the accel range to 8G
-      if(writeRegister(ACCEL_CONFIG0,ACCEL_FS_SEL_8G) < 0) {
+      if(writeRegister(UB0_REG_ACCEL_CONFIG0, ACCEL_FS_SEL_8G) < 0) {
         return -1;
       }
       _accelScale = G * 8.0f/32767.5f; // setting the accel scale to 8G
@@ -105,7 +106,7 @@ int ICM42688::setAccelRange(AccelRange range) {
     }
     case ACCEL_RANGE_16G: {
       // setting the accel range to 16G
-      if(writeRegister(ACCEL_CONFIG0,ACCEL_FS_SEL_16G) < 0) {
+      if(writeRegister(UB0_REG_ACCEL_CONFIG0, ACCEL_FS_SEL_16G) < 0) {
         return -1;
       }
       _accelScale = G * 16.0f/32767.5f; // setting the accel scale to 16G
@@ -123,7 +124,7 @@ int ICM42688::setGyroRange(GyroRange range) {
   switch(range) {
     case GYRO_RANGE_15_625DPS: {
       // setting the gyro range to 15.625DPS
-      if(writeRegister(GYRO_CONFIG0,GYRO_FS_SEL_15_625DPS) < 0) {
+      if(writeRegister(UB0_REG_GYRO_CONFIG0, GYRO_FS_SEL_15_625DPS) < 0) {
         return -1;
       }
       _gyroScale = 15.625f/32767.5f * _d2r; // setting the gyro scale to 15.625DPS
@@ -131,7 +132,7 @@ int ICM42688::setGyroRange(GyroRange range) {
     }
     case GYRO_RANGE_31_25DPS: {
       // setting the gyro range to 31.25DPS
-      if(writeRegister(GYRO_CONFIG0,GYRO_FS_SEL_31_25DPS) < 0) {
+      if(writeRegister(UB0_REG_GYRO_CONFIG0, GYRO_FS_SEL_31_25DPS) < 0) {
         return -1;
       }
       _gyroScale = 31.25f/32767.5f * _d2r; // setting the gyro scale to 31.25DPS
@@ -139,7 +140,7 @@ int ICM42688::setGyroRange(GyroRange range) {
     }
     case GYRO_RANGE_62_5DPS: {
       // setting the gyro range to 62.5DPS
-      if(writeRegister(GYRO_CONFIG0,GYRO_FS_SEL_62_5DPS) < 0) {
+      if(writeRegister(UB0_REG_GYRO_CONFIG0, GYRO_FS_SEL_62_5DPS) < 0) {
         return -1;
       }
       _gyroScale = 62.5f/32767.5f * _d2r; // setting the gyro scale to 62.5DPS
@@ -147,7 +148,7 @@ int ICM42688::setGyroRange(GyroRange range) {
     }
     case GYRO_RANGE_125DPS: {
       // setting the gyro range to 125DPS
-      if(writeRegister(GYRO_CONFIG0,GYRO_FS_SEL_125DPS) < 0) {
+      if(writeRegister(UB0_REG_GYRO_CONFIG0, GYRO_FS_SEL_125DPS) < 0) {
         return -1;
       }
       _gyroScale = 125.0f/32767.5f * _d2r; // setting the gyro scale to 125DPS
@@ -155,7 +156,7 @@ int ICM42688::setGyroRange(GyroRange range) {
     }
     case GYRO_RANGE_250DPS: {
       // setting the gyro range to 250DPS
-      if(writeRegister(GYRO_CONFIG0,GYRO_FS_SEL_250DPS) < 0) {
+      if(writeRegister(UB0_REG_GYRO_CONFIG0, GYRO_FS_SEL_250DPS) < 0) {
         return -1;
       }
       _gyroScale = 250.0f/32767.5f * _d2r; // setting the gyro scale to 250DPS
@@ -163,7 +164,7 @@ int ICM42688::setGyroRange(GyroRange range) {
     }
     case GYRO_RANGE_500DPS: {
       // setting the gyro range to 500DPS
-      if(writeRegister(GYRO_CONFIG0,GYRO_FS_SEL_500DPS) < 0) {
+      if(writeRegister(UB0_REG_GYRO_CONFIG0, GYRO_FS_SEL_500DPS) < 0) {
         return -1;
       }
       _gyroScale = 500.0f/32767.5f * _d2r; // setting the gyro scale to 500DPS
@@ -171,7 +172,7 @@ int ICM42688::setGyroRange(GyroRange range) {
     }
     case GYRO_RANGE_1000DPS: {
       // setting the gyro range to 1000DPS
-      if(writeRegister(GYRO_CONFIG0,GYRO_FS_SEL_1000DPS) < 0) {
+      if(writeRegister(UB0_REG_GYRO_CONFIG0, GYRO_FS_SEL_1000DPS) < 0) {
         return -1;
       }
       _gyroScale = 1000.0f/32767.5f * _d2r; // setting the gyro scale to 1000DPS
@@ -179,7 +180,7 @@ int ICM42688::setGyroRange(GyroRange range) {
     }
     case GYRO_RANGE_2000DPS: {
       // setting the gyro range to 2000DPS
-      if(writeRegister(GYRO_CONFIG0,GYRO_FS_SEL_2000DPS) < 0) {
+      if(writeRegister(UB0_REG_GYRO_CONFIG0, GYRO_FS_SEL_2000DPS) < 0) {
         return -1;
       }
       _gyroScale = 2000.0f/32767.5f * _d2r; // setting the gyro scale to 2000DPS
@@ -191,35 +192,32 @@ int ICM42688::setGyroRange(GyroRange range) {
 }
 
 int ICM42688::setFilters(bool gyroFilters, bool accFilters) {
-  if (writeRegister(BANK_SEL, BANK1) < 0) {
-    return -1;
-  }
+  if (setBank(1) < 0) return -1;
+
   if (gyroFilters == true) {
-    if (writeRegister(GYRO_CONFIG_STATIC2, GYRO_NF_ENABLE | GYRO_AAF_ENABLE) < 0) {
+    if (writeRegister(UB1_REG_GYRO_CONFIG_STATIC2, GYRO_NF_ENABLE | GYRO_AAF_ENABLE) < 0) {
       return -2;
     }
   }
   else {
-    if (writeRegister(GYRO_CONFIG_STATIC2, GYRO_NF_DISABLE | GYRO_AAF_DISABLE) < 0) {
+    if (writeRegister(UB1_REG_GYRO_CONFIG_STATIC2, GYRO_NF_DISABLE | GYRO_AAF_DISABLE) < 0) {
       return -3;
     }
   }
-  if (writeRegister(BANK_SEL, BANK2) < 0) {
-    return -4;
-  }
+  
+  if (setBank(2) < 0) return -4;
+
   if (accFilters == true) {
-    if (writeRegister(ACCEL_CONFIG_STATIC2, ACCEL_AAF_ENABLE) < 0) {
+    if (writeRegister(UB2_REG_ACCEL_CONFIG_STATIC2, ACCEL_AAF_ENABLE) < 0) {
       return -5;
     }
   }
   else {
-    if (writeRegister(ACCEL_CONFIG_STATIC2, ACCEL_AAF_DISABLE) < 0) {
+    if (writeRegister(UB2_REG_ACCEL_CONFIG_STATIC2, ACCEL_AAF_DISABLE) < 0) {
       return -6;
     }
   }
-  if (writeRegister(BANK_SEL, BANK0) < 0) {
-    return -7;
-  }
+  if (setBank(0) < 0) return -7;
   return 1;
 }
 
@@ -228,11 +226,11 @@ int ICM42688::enableDataReadyInterrupt() {
   // use low speed SPI for register setting
   _useSPIHS = false;
   /* setting the interrupt */
-  if (writeRegister(INT_CONFIG,INT_PULSE_100us) < 0) { // setup interrupt, pulse
-  // if (writeRegister(INT_CONFIG,INT_HOLD_ANY) < 0) { // setup interrupt, hold, any read operation
+  if (writeRegister(UB0_REG_INT_CONFIG, INT_PULSE_100us) < 0) { // setup interrupt, pulse
+  // if (writeRegister(UB0_REG_INT_CONFIG, INT_HOLD_ANY) < 0) { // setup interrupt, hold, any read operation
     return -1;
   }
-  if (writeRegister(INT_SOURCE0,UI_DRDY_INT1_EN) < 0) { // set to data ready
+  if (writeRegister(UB0_REG_INT_SOURCE0, UI_DRDY_INT1_EN) < 0) { // set to data ready
     return -2;
   }
   return 1;
@@ -242,7 +240,7 @@ int ICM42688::enableDataReadyInterrupt() {
 int ICM42688::disableDataReadyInterrupt() {
   // use low speed SPI for register setting
   _useSPIHS = false;
-  if(writeRegister(INT_SOURCE0,RESET_DONE_INT1_EN) < 0) { // set to reset done (disable interrupt)
+  if(writeRegister(UB0_REG_INT_SOURCE0, RESET_DONE_INT1_EN) < 0) { // set to reset done (disable interrupt)
     return -1;
   }
   return 1;
@@ -251,7 +249,7 @@ int ICM42688::disableDataReadyInterrupt() {
 /* disables the data ready interrupt */
 uint8_t ICM42688::isInterrupted() {
   _useSPIHS = false; // use the high speed SPI for data readout
-  readRegisters(INT_STATUS, 1, &_isInterrupted);
+  readRegisters(UB0_REG_INT_STATUS, 1, &_isInterrupted);
   return _isInterrupted & 0x08;
 }
 
@@ -265,7 +263,7 @@ int ICM42688::setUseSPIHS(bool useSPIHS) {
 int ICM42688::readSensor() {
   _useSPIHS = true; // use the high speed SPI for data readout
   // grab the data from the ICM42688
-  if (readRegisters(TEMP_OUT, 14, _buffer) < 0) {
+  if (readRegisters(UB0_REG_TEMP_DATA1, 14, _buffer) < 0) {
     return -1;
   }
   // combine into 16 bit values
@@ -290,7 +288,7 @@ int ICM42688::readSensor() {
 int ICM42688::readAcc(double* acc) {
   _useSPIHS = true; // use the high speed SPI for data readout
   // grab the data from the ICM42688
-  if (readRegisters(ACCEL_OUT, 6, _buffer) < 0) {
+  if (readRegisters(UB0_REG_ACCEL_DATA_X1, 6, _buffer) < 0) {
     return -1;
   }
   // combine into 16 bit values
@@ -308,7 +306,7 @@ int ICM42688::readAcc(double* acc) {
 int ICM42688::readGyro(double* gyro) {
   _useSPIHS = true; // use the high speed SPI for data readout
   // grab the data from the ICM42688
-  if (readRegisters(GYRO_OUT, 6, _buffer) < 0) {
+  if (readRegisters(UB0_REG_GYRO_DATA_X1, 6, _buffer) < 0) {
     return -1;
   }
   // combine into 16 bit values
@@ -326,7 +324,7 @@ int ICM42688::readGyro(double* gyro) {
 int ICM42688::readAccGyro(double* accGyro) {
   _useSPIHS = true; // use the high speed SPI for data readout
   // grab the data from the ICM42688
-  if (readRegisters(ACCEL_OUT, 12, _buffer) < 0) {
+  if (readRegisters(UB0_REG_ACCEL_DATA_X1, 12, _buffer) < 0) {
     return -1;
   }
   // combine into 16 bit values
@@ -415,12 +413,12 @@ int ICM42688_FIFO::enableFifo(bool accel,bool gyro,bool temp) {
 int ICM42688_FIFO::readFifo() {
   _useSPIHS = true; // use the high speed SPI for data readout
   // get the fifo size
-  readRegisters(FIFO_COUNT, 2, _buffer);
+  readRegisters(UB0_REG_FIFO_COUNTH, 2, _buffer);
   _fifoSize = (((uint16_t) (_buffer[0]&0x0F)) <<8) + (((uint16_t) _buffer[1]));
   // read and parse the buffer
   for (size_t i=0; i < _fifoSize/_fifoFrameSize; i++) {
     // grab the data from the ICM42688
-    if (readRegisters(FIFO_DATA,_fifoFrameSize,_buffer) < 0) {
+    if (readRegisters(UB0_REG_FIFO_DATA, _fifoFrameSize, _buffer) < 0) {
       return -1;
     }
     if (_enFifoAccel) {
@@ -684,7 +682,7 @@ int ICM42688::writeRegister(uint8_t subAddress, uint8_t data) {
   delay(10);
 
   /* read back the register */
-  readRegisters(subAddress,1,_buffer);
+  readRegisters(subAddress, 1, _buffer);
   /* check the read back register against the written register */
   if(_buffer[0] == data) {
     return 1;
@@ -729,10 +727,30 @@ int ICM42688::readRegisters(uint8_t subAddress, uint8_t count, uint8_t* dest) {
   }
 }
 
+int ICM42688::setBank(uint8_t bank) {
+  // if we are already on this bank, bail
+  if (_bank == bank) return 1;
+
+  _bank = bank;
+
+  return writeRegister(REG_BANK_SEL, bank);
+}
+
+void ICM42688::reset() {
+  setBank(0);
+
+  writeRegister(UB0_REG_DEVICE_CONFIG, 0x01);
+
+  // wait for ICM42688 to come back up
+  delay(1);
+}
+
 /* gets the ICM42688 WHO_AM_I register value, expected to be 0x98 */
 int ICM42688::whoAmI() {
+  setBank(0);
+
   // read the WHO AM I register
-  if (readRegisters(WHO_AM_I,1,_buffer) < 0) {
+  if (readRegisters(UB0_REG_WHO_AM_I, 1, _buffer) < 0) {
     return -1;
   }
   // return the register value
