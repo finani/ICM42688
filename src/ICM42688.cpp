@@ -32,26 +32,22 @@ int ICM42688::begin() {
     // setting the I2C clock
     _i2c->setClock(_i2cRate);
   }
-  // select clock source to gyro
-  if(writeRegister(INTF_CONFIG1,CLOCK_SEL_PLL) < 0) {
-    return -1;
-  }
+
   // reset the ICM42688
-  writeRegister(DEVICE_CONFIG,PWR_RESET);
+  writeRegister(DEVICE_CONFIG, 0x01);
   // wait for ICM42688 to come back up
   delay(1);
-  // select clock source to gyro
-  if(writeRegister(INTF_CONFIG1,CLOCK_SEL_PLL) < 0) {
-    return -2;
-  }
+
   // check the WHO AM I byte, expected value is 0x47 (decimal 71)
   if(whoAmI() != 71) {
     return -3;
   }
-  // enable accelerometer and gyro
-  if(writeRegister(PWR_MGMT0,SEN_ENABLE) < 0) {
+
+  // turn on accel and gyro in Low Noise (LN) Mode
+  if(writeRegister(PWR_MGMT0, 0x0F) < 0) {
     return -4;
   }
+
   // setting accel range to 16G and 32kHz as default
   if(writeRegister(ACCEL_CONFIG0,ACCEL_FS_SEL_16G | ACCEL_ODR_32KHZ) < 0) {
     return -5;
