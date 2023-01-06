@@ -671,7 +671,7 @@ void ICM42688::setAccelCalZ(double bias,double scaleFactor) {
 int ICM42688::writeRegister(uint8_t subAddress, uint8_t data) {
   /* write data to device */
   if( _useSPI ) {
-    _spi->beginTransaction(SPISettings(SPI_LS_CLOCK, MSBFIRST, SPI_MODE1)); // begin the transaction
+    _spi->beginTransaction(SPISettings(SPI_LS_CLOCK, MSBFIRST, SPI_MODE3)); // begin the transaction
     digitalWrite(_csPin,LOW); // select the ICM42688 chip
     _spi->transfer(subAddress); // write the register address
     _spi->transfer(data); // write the data
@@ -703,10 +703,10 @@ int ICM42688::readRegisters(uint8_t subAddress, uint8_t count, uint8_t* dest) {
   if( _useSPI ) {
     // begin the transaction
     if(_useSPIHS) {
-      _spi->beginTransaction(SPISettings(SPI_HS_CLOCK, MSBFIRST, SPI_MODE1));
+      _spi->beginTransaction(SPISettings(SPI_HS_CLOCK, MSBFIRST, SPI_MODE3));
     }
     else{
-      _spi->beginTransaction(SPISettings(SPI_LS_CLOCK, MSBFIRST, SPI_MODE1));
+      _spi->beginTransaction(SPISettings(SPI_LS_CLOCK, MSBFIRST, SPI_MODE3));
     }
     digitalWrite(_csPin,LOW); // select the ICM42688 chip
     _spi->transfer(subAddress | SPI_READ); // specify the starting register address
