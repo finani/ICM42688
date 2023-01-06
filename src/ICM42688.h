@@ -118,13 +118,16 @@ class ICM42688{
     const double G = 9.807f;
     const double _d2r = 3.14159265359f/180.0f;
     const double _r2d = 180.0f/3.14159265359f;
+
+    uint8_t _bank = 0; ///< current user bank
+
     // ICM42688 registers
     // BANK 0
-    const uint8_t ACCEL_OUT = 0x1F;
-    const uint8_t GYRO_OUT = 0x25;
-    const uint8_t TEMP_OUT = 0x1D;
+    // const uint8_t ACCEL_OUT = 0x1F;
+    // const uint8_t GYRO_OUT = 0x25;
+    // const uint8_t TEMP_OUT = 0x1D;
 
-    const uint8_t ACCEL_CONFIG0 = 0x50;
+    // const uint8_t ACCEL_CONFIG0 = 0x50;
     const uint8_t ACCEL_FS_SEL_2G = 0x60;
     const uint8_t ACCEL_FS_SEL_4G = 0x40;
     const uint8_t ACCEL_FS_SEL_8G = 0x20;
@@ -145,7 +148,7 @@ class ICM42688{
     const uint8_t ACCEL_ODR_1_5625HZ = 0x0E;
     const uint8_t ACCEL_ODR_500HZ = 0x0F;
 
-    const uint8_t GYRO_CONFIG0 = 0x4F;
+    // const uint8_t GYRO_CONFIG0 = 0x4F;
     const uint8_t GYRO_FS_SEL_15_625DPS = 0xE0;
     const uint8_t GYRO_FS_SEL_31_25DPS = 0xC0;
     const uint8_t GYRO_FS_SEL_62_5DPS = 0xA0;
@@ -167,48 +170,50 @@ class ICM42688{
     const uint8_t GYRO_ODR_12_5HZ = 0x0B;
     const uint8_t GYRO_ODR_500HZ = 0x0F;
 
-    const uint8_t INT_CONFIG = 0x14;
+    // const uint8_t INT_CONFIG = 0x14;
     const uint8_t INT_HOLD_ANY = 0x08;
     const uint8_t INT_PULSE_100us = 0x03;
-    const uint8_t INT_SOURCE0 = 0x65;
+    // const uint8_t INT_SOURCE0 = 0x65;
     const uint8_t RESET_DONE_INT1_EN = 0x10;
     const uint8_t UI_DRDY_INT1_EN = 0x10;
-    const uint8_t INT_STATUS = 0x2D;
+    // const uint8_t INT_STATUS = 0x2D;
 
-    const uint8_t DEVICE_CONFIG = 0x11;
-    const uint8_t INTF_CONFIG1 = 0x4D;
-    const uint8_t PWR_MGMT0 = 0x4E;
+    // const uint8_t DEVICE_CONFIG = 0x11;
+    // const uint8_t INTF_CONFIG1 = 0x4D;
+    // const uint8_t PWR_MGMT0 = 0x4E;
 
-    const uint8_t WHO_AM_I = 0x75;
+    // const uint8_t WHO_AM_I = 0x75;
     const uint8_t FIFO_EN = 0x23;
     const uint8_t FIFO_TEMP_EN = 0x04;
     const uint8_t FIFO_GYRO = 0x02;
     const uint8_t FIFO_ACCEL = 0x01;
-    const uint8_t FIFO_COUNT = 0x2E;
-    const uint8_t FIFO_DATA = 0x30;
+    // const uint8_t FIFO_COUNT = 0x2E;
+    // const uint8_t FIFO_DATA = 0x30;
 
-    const uint8_t BANK_SEL = 0x76;
-    const uint8_t BANK0 = 0x00;
-    const uint8_t BANK1 = 0x01;
-    const uint8_t BANK2 = 0x02;
-    const uint8_t BANK3 = 0x03;
-    const uint8_t BANK4 = 0x04;
+    // const uint8_t BANK_SEL = 0x76;
+    // const uint8_t BANK0 = 0x00;
+    // const uint8_t BANK1 = 0x01;
+    // const uint8_t BANK2 = 0x02;
+    // const uint8_t BANK3 = 0x03;
+    // const uint8_t BANK4 = 0x04;
 
     // BANK 1
-    const uint8_t GYRO_CONFIG_STATIC2 = 0x0B;
+    // const uint8_t GYRO_CONFIG_STATIC2 = 0x0B;
     const uint8_t GYRO_NF_ENABLE = 0x00;
     const uint8_t GYRO_NF_DISABLE = 0x01;
     const uint8_t GYRO_AAF_ENABLE = 0x00;
     const uint8_t GYRO_AAF_DISABLE = 0x02;
 
     // BANK 2
-    const uint8_t ACCEL_CONFIG_STATIC2 = 0x03;
+    // const uint8_t ACCEL_CONFIG_STATIC2 = 0x03;
     const uint8_t ACCEL_AAF_ENABLE = 0x00;
     const uint8_t ACCEL_AAF_DISABLE = 0x01;
 
     // private functions
     int writeRegister(uint8_t subAddress, uint8_t data);
     int readRegisters(uint8_t subAddress, uint8_t count, uint8_t* dest);
+    int setBank(uint8_t bank);
+    void reset();
     int whoAmI();
 };
 
