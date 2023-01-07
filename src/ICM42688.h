@@ -27,6 +27,24 @@ class ICM42688
       gpm2 = 0x03
     };
 
+    enum ODR : uint8_t {
+      odr32k = 0x01, // LN mode only
+      odr16k = 0x02, // LN mode only
+      odr8k = 0x03, // LN mode only
+      odr4k = 0x04, // LN mode only
+      odr2k = 0x05, // LN mode only
+      odr1k = 0x06, // LN mode only
+      odr200 = 0x07,
+      odr100 = 0x08,
+      odr50 = 0x09,
+      odr25 = 0x0A,
+      odr12_5 = 0x0B,
+      odr6a25 = 0x0C, // LP mode only (accel only)
+      odr3a125 = 0x0D, // LP mode only (accel only)
+      odr1a5625 = 0x0E, // LP mode only (accel only)
+      odr500 = 0x0F,
+    };
+
     /**
      * @brief      Constructor for I2C communication
      *
@@ -41,7 +59,7 @@ class ICM42688
      * @param      bus    SPI bus
      * @param[in]  csPin  Chip Select pin
      */
-    ICM42688(SPIClass &bus,uint8_t csPin);
+    ICM42688(SPIClass &bus, uint8_t csPin);
 
     /**
      * @brief      Initialize the device.
@@ -67,6 +85,24 @@ class ICM42688
      * @return     ret < 0 if error
      */
     int setGyroFS(GyroFS fssel);
+
+    /**
+     * @brief      Set the ODR for accelerometer
+     *
+     * @param[in]  odr   Output data rate
+     *
+     * @return     ret < 0 if error
+     */
+    int setAccelODR(ODR odr);
+
+    /**
+     * @brief      Set the ODR for gyro
+     *
+     * @param[in]  odr   Output data rate
+     *
+     * @return     ret < 0 if error
+     */
+    int setGyroODR(ODR odr);
 
     int setFilters(bool gyroFilters, bool accFilters);
     int enableDataReadyInterrupt();
@@ -169,55 +205,6 @@ class ICM42688
 
     uint8_t _bank = 0; ///< current user bank
 
-    // ICM42688 registers
-    // BANK 0
-    // const uint8_t ACCEL_OUT = 0x1F;
-    // const uint8_t GYRO_OUT = 0x25;
-    // const uint8_t TEMP_OUT = 0x1D;
-
-    // const uint8_t ACCEL_CONFIG0 = 0x50;
-    // const uint8_t ACCEL_FS_SEL_2G = 0x60;
-    // const uint8_t ACCEL_FS_SEL_4G = 0x40;
-    // const uint8_t ACCEL_FS_SEL_8G = 0x20;
-    // const uint8_t ACCEL_FS_SEL_16G = 0x00;
-    const uint8_t ACCEL_ODR_32KHZ = 0x01;
-    const uint8_t ACCEL_ODR_16KHZ = 0x02;
-    const uint8_t ACCEL_ODR_8KHZ = 0x03;
-    const uint8_t ACCEL_ODR_4KHZ = 0x04;
-    const uint8_t ACCEL_ODR_2KHZ = 0x05;
-    const uint8_t ACCEL_ODR_1KHZ = 0x06;
-    const uint8_t ACCEL_ODR_200HZ = 0x07;
-    const uint8_t ACCEL_ODR_100HZ = 0x08;
-    const uint8_t ACCEL_ODR_50HZ = 0x09;
-    const uint8_t ACCEL_ODR_25HZ = 0x0A;
-    const uint8_t ACCEL_ODR_12_5HZ = 0x0B;
-    const uint8_t ACCEL_ODR_6_25HZ = 0x0C;
-    const uint8_t ACCEL_ODR_3_125HZ = 0x0D;
-    const uint8_t ACCEL_ODR_1_5625HZ = 0x0E;
-    const uint8_t ACCEL_ODR_500HZ = 0x0F;
-
-    // const uint8_t GYRO_CONFIG0 = 0x4F;
-    // const uint8_t GYRO_FS_SEL_15_625DPS = 0xE0;
-    // const uint8_t GYRO_FS_SEL_31_25DPS = 0xC0;
-    // const uint8_t GYRO_FS_SEL_62_5DPS = 0xA0;
-    // const uint8_t GYRO_FS_SEL_125DPS = 0x80;
-    // const uint8_t GYRO_FS_SEL_250DPS = 0x60;
-    // const uint8_t GYRO_FS_SEL_500DPS = 0x40;
-    // const uint8_t GYRO_FS_SEL_1000DPS = 0x20;
-    // const uint8_t GYRO_FS_SEL_2000DPS = 0x00;
-    const uint8_t GYRO_ODR_32KHZ = 0x01;
-    const uint8_t GYRO_ODR_16KHZ = 0x02;
-    const uint8_t GYRO_ODR_8KHZ = 0x03;
-    const uint8_t GYRO_ODR_4KHZ = 0x04;
-    const uint8_t GYRO_ODR_2KHZ = 0x05;
-    const uint8_t GYRO_ODR_1KHZ = 0x06;
-    const uint8_t GYRO_ODR_200HZ = 0x07;
-    const uint8_t GYRO_ODR_100HZ = 0x08;
-    const uint8_t GYRO_ODR_50HZ = 0x09;
-    const uint8_t GYRO_ODR_25HZ = 0x0A;
-    const uint8_t GYRO_ODR_12_5HZ = 0x0B;
-    const uint8_t GYRO_ODR_500HZ = 0x0F;
-
     // const uint8_t INT_CONFIG = 0x14;
     const uint8_t INT_HOLD_ANY = 0x08;
     const uint8_t INT_PULSE_100us = 0x03;
@@ -238,13 +225,6 @@ class ICM42688
     // const uint8_t FIFO_COUNT = 0x2E;
     // const uint8_t FIFO_DATA = 0x30;
 
-    // const uint8_t BANK_SEL = 0x76;
-    // const uint8_t BANK0 = 0x00;
-    // const uint8_t BANK1 = 0x01;
-    // const uint8_t BANK2 = 0x02;
-    // const uint8_t BANK3 = 0x03;
-    // const uint8_t BANK4 = 0x04;
-
     // BANK 1
     // const uint8_t GYRO_CONFIG_STATIC2 = 0x0B;
     const uint8_t GYRO_NF_ENABLE = 0x00;
@@ -261,8 +241,18 @@ class ICM42688
     int writeRegister(uint8_t subAddress, uint8_t data);
     int readRegisters(uint8_t subAddress, uint8_t count, uint8_t* dest);
     int setBank(uint8_t bank);
+
+    /**
+     * @brief      Software reset of the device
+     */
     void reset();
-    int whoAmI();
+
+    /**
+     * @brief      Read the WHO_AM_I register
+     *
+     * @return     Value of WHO_AM_I register
+     */
+    uint8_t whoAmI();
 
     static constexpr uint8_t WHO_AM_I = 0x47; ///< expected value in UB0_REG_WHO_AM_I reg
 };

@@ -114,6 +114,42 @@ int ICM42688::setGyroFS(GyroFS fssel) {
   return 1;
 }
 
+int ICM42688::setAccelODR(ODR odr) {
+  // use low speed SPI for register setting
+  _useSPIHS = false;
+
+  setBank(0);
+
+  // read current register value
+  uint8_t reg;
+  if (readRegisters(UB0_REG_ACCEL_CONFIG0, 1, &reg) < 0) return -1;
+
+  // only change ODR in reg
+  reg = odr | (reg & 0xF0);
+
+  if (writeRegister(UB0_REG_ACCEL_CONFIG0, reg) < 0) return -2;
+
+  return 1;
+}
+
+int ICM42688::setGyroODR(ODR odr) {
+  // use low speed SPI for register setting
+  _useSPIHS = false;
+
+  setBank(0);
+
+  // read current register value
+  uint8_t reg;
+  if (readRegisters(UB0_REG_GYRO_CONFIG0, 1, &reg) < 0) return -1;
+
+  // only change ODR in reg
+  reg = odr | (reg & 0xF0);
+
+  if (writeRegister(UB0_REG_GYRO_CONFIG0, reg) < 0) return -2;
+
+  return 1;
+}
+
 int ICM42688::setFilters(bool gyroFilters, bool accFilters) {
   if (setBank(1) < 0) return -1;
 
@@ -606,7 +642,7 @@ void ICM42688::reset() {
 }
 
 /* gets the ICM42688 WHO_AM_I register value */
-int ICM42688::whoAmI() {
+uint8_t ICM42688::whoAmI() {
   setBank(0);
 
   // read the WHO AM I register
