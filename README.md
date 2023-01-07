@@ -6,10 +6,10 @@ The InvenSense ICM42688 supports I2C, up to 400 kHz, and SPI communication, up t
 
 | Gyroscope Full Scale Range | Accelerometer Full Scale Range |
 | --- | --- |
-| +/- 15.6 (deg/s) |            |
-| +/- 31.2 (deg/s) |            |
-| +/- 62.5 (deg/s) |            |
-| +/- 125 (deg/s)  |            |
+| +/- 15.6 (deg/s) | -          |
+| +/- 31.2 (deg/s) | -          |
+| +/- 62.5 (deg/s) | -          |
+| +/- 125 (deg/s)  | -          |
 | +/- 250 (deg/s)  | +/- 2 (g)  |
 | +/- 500 (deg/s)  | +/- 4 (g)  |
 | +/- 1000 (deg/s) | +/- 8 (g)  |
@@ -268,40 +268,8 @@ float azs = 0.97; // accel scale factor of 0.97
 IMU.setAccelCalZ(azb,azs);
 ```
 
-#### Wake on Motion Setup
-
-**(optional) int enableWakeOnMotion(float womThresh_mg,LpAccelOdr odr)**
-This function enables the MPU-9250 wake on motion interrupt functionality. It places the MPU-9250 into a low power state, with the MPU-9250 waking up at an interval determined by the Low Power Accelerometer Output Data Rate. If the accelerometer detects motion in excess of the threshold given, it generates a 50us pulse from the MPU-9250 INT pin. The following enumerated Low Power Accelerometer Output Data Rates are supported:
-
-| LpAccelOdr Name      | Output Data Rate |
-| ------------------   | ---------------- |
-| LP_ACCEL_ODR_0_24HZ  | 0.24 Hz          |
-| LP_ACCEL_ODR_0_49HZ  | 0.49 Hz          |
-| LP_ACCEL_ODR_0_98HZ  | 0.98 Hz          |
-| LP_ACCEL_ODR_1_95HZ  | 1.95 Hz          |
-| LP_ACCEL_ODR_3_91HZ  | 3.91 Hz          |
-| LP_ACCEL_ODR_7_81HZ  | 7.81 Hz          |
-| LP_ACCEL_ODR_15_63HZ | 15.63 Hz         |
-| LP_ACCEL_ODR_31_25HZ | 31.25 Hz         |
-| LP_ACCEL_ODR_62_50HZ | 62.50 Hz         |
-| LP_ACCEL_ODR_125HZ   | 125 Hz           |
-| LP_ACCEL_ODR_250HZ   | 250 Hz           |
-| LP_ACCEL_ODR_500HZ   | 500 Hz           |
-
-The motion threshold is given as a float value between 0 and 1020 mg mapped, which is internally mapped to a single byte, 0-255 value. This function returns a positive value on success and a negative value on failure. Please see the *WOM_I2C example*. The following is an example of enabling the wake on motion with a 400 mg threshold and a ODR of 31.25 Hz.
-
-```C++
-status = IMU.enableWakeOnMotion(400,MPU9250::LP_ACCEL_ODR_31_25HZ);
-```
-
-**int setUseSPIHS(bool useSPIHS)** set SPI Mode. This function returns a positive value on success and a negative value on failure. (It always returns a positive value because It try to change member variable.)
-
-```C++
-IMU.setUseSPIHS(bool useSPIHS);
-```
-
 ### Common Data Collection Functions
-The functions below are used to collect data from the ICM42688 sensor. Data is returned scaled to engineering units and transformed to a [common axis system](#sensor-orientation).
+The functions below are used to collect data from the ICM42688 sensor. Please refer to the datasheet Section 10.1 for the orientation of the sensitive axes.
 
 #### Real-Time Data Collection
 **int getAGT()** reads the sensor and stores the newest data in a buffer, it should be called every time you would like to retrieve data from the sensor. This function returns a positive value on success and a negative value on failure.
