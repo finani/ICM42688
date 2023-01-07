@@ -26,20 +26,61 @@ class ICM42688{
       gpm2 = 0x03
     };
 
-    ICM42688(TwoWire &bus,uint8_t address);
+    /**
+     * @brief      Constructor for I2C communication
+     *
+     * @param      bus      I2C bus
+     * @param[in]  address  Address of ICM 42688-p device
+     */
+    ICM42688(TwoWire &bus, uint8_t address);
+
+    /**
+     * @brief      Constructor for SPI communication
+     *
+     * @param      bus    SPI bus
+     * @param[in]  csPin  Chip Select pin
+     */
     ICM42688(SPIClass &bus,uint8_t csPin);
+
+    /**
+     * @brief      Initialize the device.
+     *
+     * @return     ret < 0 if error
+     */
     int begin();
-    int setAccelFS(AccelFS range);
+
+    /**
+     * @brief      Sets the full scale range for the accelerometer
+     *
+     * @param[in]  fssel  Full scale selection
+     *
+     * @return     ret < 0 if error
+     */
+    int setAccelFS(AccelFS fssel);
+
+    /**
+     * @brief      Sets the full scale range for the gyro
+     *
+     * @param[in]  fssel  Full scale selection
+     *
+     * @return     ret < 0 if error
+     */
     int setGyroFS(GyroFS fssel);
+
     int setFilters(bool gyroFilters, bool accFilters);
     int enableDataReadyInterrupt();
     int disableDataReadyInterrupt();
     uint8_t isInterrupted();
     int setUseSPIHS(bool useSPIHS);
-    int readSensor();
-    int readAcc(double* acc);
-    int readGyro(double* gyro);
-    int readAccGyro(double* accGyro);
+
+    /**
+     * @brief      Transfers data from ICM 42688-p to microcontroller.
+     *             Must be called to access new measurements.
+     *
+     * @return     ret < 0 if error
+     */
+    int getAGT();
+
     double getAccelX_mss();
     double getAccelY_mss();
     double getAccelZ_mss();
@@ -69,12 +110,13 @@ class ICM42688{
     void setAccelCalY(double bias,double scaleFactor);
     void setAccelCalZ(double bias,double scaleFactor);
   protected:
-    // i2c
+    ///\brief I2C Communication
     uint8_t _address = 0;
     TwoWire *_i2c = {};
     const uint32_t _i2cRate = 400000; // 400 kHz
     size_t _numBytes = 0; // number of bytes received from I2C
-    // spi
+
+    ///\brief SPI Communication
     SPIClass *_spi = {};
     uint8_t _csPin = 0;
     bool _useSPI = false;
@@ -82,43 +124,47 @@ class ICM42688{
     const uint8_t SPI_READ = 0x80;
     const uint32_t SPI_LS_CLOCK = 1000000; // 1 MHz
     const uint32_t SPI_HS_CLOCK = 8000000; // 8 MHz
+
     // buffer for reading from sensor
     uint8_t _buffer[15] = {};
-    // data counts
-    int16_t _accCounts[3] = {};
-    int16_t _gyroCounts[3] = {};
-    int16_t _tcounts = 0;
+
     // data buffer
-    double _acc[3] = {};
-    double _gyro[3] = {};
     double _t = 0.0;
+    double _acc[3] = {};
+    double _gyr[3] = {};
     uint8_t _isInterrupted = 0;
-    // scale factors
+
+    ///\brief Full scale resolution factors
     double _accelScale = 0.0;
     double _gyroScale = 0.0;
-    const double _tempScale = 333.87f;
-    const double _tempOffset = 21.0f;
-    // configuration
+
+    ///\brief Full scale selections
     AccelFS _accelFS;
     GyroFS _gyroFS;
-    // gyro bias estimation
-    size_t _numSamples = 100;
-    double _gyroBD[3] = {};
-    double _gyroB[3] = {};
-    // accel bias and scale factor estimation
+
+    ///\brief Accel calibration
     double _accBD[3] = {};
     double _accB[3] = {};
     double _accS[3] = {1.0, 1.0, 1.0};
     double _accMax[3] = {};
     double _accMin[3] = {};
-    // transformation matrix
-    const int16_t tX[3] = {0,  1,  0};
-    const int16_t tY[3] = {1,  0,  0};
-    const int16_t tZ[3] = {0,  0, -1};
-    // constants
-    const double G = 9.807f;
-    const double _d2r = 3.14159265359f/180.0f;
-    const double _r2d = 180.0f/3.14159265359f;
+
+    ///\brief Gyro calibration
+    double _gyroBD[3] = {};
+    double _gyrB[3] = {};
+
+    // gyro bias estimation
+    size_t _numSamples = 100;
+
+    ///\brief Unit conversion constants
+    static constexpr double G = 9.807f;
+    static constexpr double DEG2RAD = 3.14159265359 / 180.0;
+    static constexpr double RAD2DEG = 180.0 / 3.14159265359;
+
+
+    ///\brief Conversion formula to get temperature in Celsius (Sec 4.13)
+    static constexpr double TEMP_DATA_REG_SCALE = 132.48;
+    static constexpr double TEMP_OFFSET = 25;
 
     uint8_t _bank = 0; ///< current user bank
 
