@@ -467,11 +467,6 @@ size_t samples;
 IMU.getFifoTemperature_C(&samples,temp);
 ```
 
-## <a name="sensor-orientation"></a>Sensor Orientation
-This library transforms all data to a common axis system before it is returned. It is a right handed coordinate system with the z-axis positive down, common in aircraft dynamics.
-
-**Caution!** This axis system is shown relative to the ICM42688 sensor. The sensor may be rotated relative to the breakout board.
-
 ## Example List
 
 * **Basic_I2C**: demonstrates declaring an *ICM42688* object, initializing the sensor, and collecting data. I2C is used to communicate with the ICM42688 sensor.
