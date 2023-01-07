@@ -37,17 +37,17 @@ void getIMU(){
   // read the sensor
   IMU.getAGT();
   // display the data
-  Serial.print(IMU.getAccelX_mss(),6);
+  Serial.print(IMU.accX(),6);
   Serial.print("\t");
-  Serial.print(IMU.getAccelY_mss(),6);
+  Serial.print(IMU.accY(),6);
   Serial.print("\t");
-  Serial.print(IMU.getAccelZ_mss(),6);
+  Serial.print(IMU.accZ(),6);
   Serial.print("\t");
-  Serial.print(IMU.getGyroX_rads(),6);
+  Serial.print(IMU.gyrX(),6);
   Serial.print("\t");
-  Serial.print(IMU.getGyroY_rads(),6);
+  Serial.print(IMU.gyrY(),6);
   Serial.print("\t");
-  Serial.print(IMU.getGyroZ_rads(),6);
+  Serial.print(IMU.gyrZ(),6);
   Serial.print("\t");
-  Serial.println(IMU.getTemperature_C(),6);
+  Serial.println(IMU.temp(),6);
 }
