@@ -302,77 +302,52 @@ IMU.setUseSPIHS(bool useSPIHS);
 The functions below are used to collect data from the ICM42688 sensor. Data is returned scaled to engineering units and transformed to a [common axis system](#sensor-orientation).
 
 #### Real-Time Data Collection
-**int readSensor()** reads the sensor and stores the newest data in a buffer, it should be called every time you would like to retrieve data from the sensor. This function returns a positive value on success and a negative value on failure.
+**int getAGT()** reads the sensor and stores the newest data in a buffer, it should be called every time you would like to retrieve data from the sensor. This function returns a positive value on success and a negative value on failure.
 
 ```C++
-IMU.readSensor();
+IMU.getAGT();
 ```
 
-**int readAcc(double* acc)** reads the accelerometer and stores the newest data in acc, it should be called every time you would like to retrieve data from the accelerometer. This function returns a positive value on success and a negative value on failure.
+**float accX()** gets the accelerometer value from the data buffer in the X direction and returns it in units of g's.
 
 ```C++
-IMU.readAcc(double* acc);
+float ax = IMU.accX();
 ```
 
-**int readGyro(double* gyro)** reads the gyroscope and stores the newest data in gyro, it should be called every time you would like to retrieve data from the gyroscope. This function returns a positive value on success and a negative value on failure.
+**float accY()** gets the accelerometer value from the data buffer in the Y direction and returns it in units of g's.
 
 ```C++
-IMU.readGyro(double* gyro);
+float ay = IMU.accY();
 ```
 
-**int readAccGyro(double* accGyro)** reads the accelerometer and the gyroscope, and stores the newest data in accGyro, it should be called every time you would like to retrieve data from the accelerometer and the gyroscope. This function returns a positive value on success and a negative value on failure.
+**float accZ()** gets the accelerometer value from the data buffer in the Z direction and returns it in units of g's.
 
 ```C++
-IMU.readAccGyro(double* accGyro);
+float az = IMU.accZ();
 ```
 
-**float getAccelX_mss()** gets the accelerometer value from the data buffer in the X direction and returns it in units of m/s/s.
+**float gyrX()** gets the gyroscope value from the data buffer in the X direction and returns it in units of deg/s.
 
 ```C++
-float ax;
-ax = IMU.getAccelX_mss();
+float gx = IMU.gyrX();
 ```
 
-**float getAccelY_mss()** gets the accelerometer value from the data buffer in the Y direction and returns it in units of m/s/s.
+**float gyrY()** gets the gyroscope value from the data buffer in the Y direction and returns it in units of deg/s.
 
 ```C++
-float ay;
-ay = IMU.getAccelY_mss();
+float gy = IMU.gyrY();
 ```
 
-**float getAccelZ_mss()** gets the accelerometer value from the data buffer in the Z direction and returns it in units of m/s/s.
+**float gyrZ()** gets the gyroscope value from the data buffer in the Z direction and returns it in units of deg/s.
 
 ```C++
-float az;
-az = IMU.getAccelZ_mss();
+float gz = IMU.gyrZ();
 ```
 
-**float getGyroX_rads()** gets the gyroscope value from the data buffer in the X direction and returns it in units of rad/s.
+**float temp()** gets the die temperature value from the data buffer and returns it in units of C.
 
 ```C++
-float gx;
-gx = IMU.getGyroX_rads();
-```
-
-**float getGyroY_rads()** gets the gyroscope value from the data buffer in the Y direction and returns it in units of rad/s.
-
-```C++
-float gy;
-gy = IMU.getGyroY_rads();
-```
-
-**float getGyroZ_rads()** gets the gyroscope value from the data buffer in the Z direction and returns it in units of rad/s.
-
-```C++
-float gz;
-gz = IMU.getGyroZ_rads();
-```
-
-**float getTemperature_C()** gets the die temperature value from the data buffer and returns it in units of C.
-
-```C++
-float temperature;
-temperature = IMU.getTemperature_C();
+float temperature = IMU.temp();
 ```
 
 ## ICM42688FIFO Class
@@ -380,21 +355,23 @@ The *ICM42688FIFO* derived class extends the functionality provided by the *ICM4
 
 ### I2C Object Declaration
 
-**ICM42688FIFO(TwoWire &bus,uint8_t address)**
+**ICM42688FIFO(TwoWire &bus, uint8_t address)**
 An ICM42688FIFO object should be declared, specifying the I2C bus and ICM42688 I2C address. The ICM42688 I2C address will be 0x68 if the AD0 pin is grounded or 0x69 if the AD0 pin is pulled high. For example, the following code declares an ICM42688FIFO object called *IMU* with an ICM42688 sensor located on I2C bus 0 with a sensor address of 0x68 (AD0 grounded).
 
 ```C++
-ICM42688FIFO IMU(Wire,0x68);
+ICM42688FIFO IMU(Wire, 0x68);
 ```
 
 ### SPI Object Declaratioon
 
-**ICM42688FIFO(SPIClass &bus,uint8_t csPin)**
+**ICM42688FIFO(SPIClass &bus, uint8_t csPin, uint32_t SPI_HS_CLK=8000000)**
 An ICM42688FIFO object should be declared, specifying the SPI bus and chip select pin used. Multiple ICM42688 or other SPI objects could be used on the same SPI bus, each with their own chip select pin. The chip select pin can be any available digital pin. For example, the following code declares an ICM42688FIFO object called *IMU* with an ICM42688 sensor located on SPI bus 0 with chip select pin 10.
 
 ```C++
-ICM42688FIFO IMU(SPI,10);
+ICM42688FIFO IMU(SPI, 10);
 ```
+
+Note that the default high-speed SPI bus clock is set to 8 MHz, but the ICM 42688-p supports up to 24 MHz SPI clock. Use a faster clock for faster SPI data transfers when reading data.
 
 ### FIFO Setup
 **(optional) int enableFifo(bool accel,bool gyro,bool temp)**
@@ -435,28 +412,28 @@ size_t samples;
 IMU.getFifoAccelZ_mss(&samples,az);
 ```
 
-**void getFifoGyroX_rads(size_t *size,float* data)** gets the gyroscope value from the data buffer in the X direction and returns it in units of rad/s. The data is returned as an array along with the number of elements within that array. Ensure that the buffer you are transfering to has enough capacity to store the data.
+**void getFifoGyroX(size_t *size,float* data)** gets the gyroscope value from the data buffer in the X direction and returns it in units of deg/s. The data is returned as an array along with the number of elements within that array. Ensure that the buffer you are transfering to has enough capacity to store the data.
 
 ```C++
 float gx[100];
 size_t samples;
-IMU.getFifoGyroX_rads(&samples,gx);
+IMU.getFifoGyroX(&samples,gx);
 ```
 
-**void getFifoGyroY_rads(size_t *size,float* data)** gets the gyroscope value from the data buffer in the Y direction and returns it in units of rad/s. The data is returned as an array along with the number of elements within that array. Ensure that the buffer you are transfering to has enough capacity to store the data.
+**void getFifoGyroY(size_t *size,float* data)** gets the gyroscope value from the data buffer in the Y direction and returns it in units of deg/s. The data is returned as an array along with the number of elements within that array. Ensure that the buffer you are transfering to has enough capacity to store the data.
 
 ```C++
 float gy[100];
 size_t samples;
-IMU.getFifoGyroY_rads(&samples,gy);
+IMU.getFifoGyroY(&samples,gy);
 ```
 
-**void getFifoGyroZ_rads(size_t *size,float* data)** gets the gyroscope value from the data buffer in the Z direction and returns it in units of rad/s. The data is returned as an array along with the number of elements within that array. Ensure that the buffer you are transfering to has enough capacity to store the data.
+**void getFifoGyroZ(size_t *size,float* data)** gets the gyroscope value from the data buffer in the Z direction and returns it in units of deg/s. The data is returned as an array along with the number of elements within that array. Ensure that the buffer you are transfering to has enough capacity to store the data.
 
 ```C++
 float gz[100];
 size_t samples;
-IMU.getFifoGyroZ_rads(&samples,gx);
+IMU.getFifoGyroZ(&samples,gx);
 ```
 
 **void getFifoTemperature_C(size_t *size,float* data)** gets the die temperature value from the data buffer and returns it in units of C. The data is returned as an array along with the number of elements within that array. Ensure that the buffer you are transfering to has enough capacity to store the data.
@@ -485,7 +462,7 @@ Please refer to the [ICM42688 datasheet](https://github.com/finani/ICM42688/blob
 The ICM42688 pins should be connected as:
    * 3V3: this should be a 3.0V to 3.6V power source.
    * GND: ground.
-   * INT: (optional) used for the interrupt output setup in *enableDataReadyInterrupt* and *enableWakeOnMotion*. Connect to interruptable pin on microcontroller.
+   * INT1: (optional) used for the interrupt output setup in *enableDataReadyInterrupt* and *enableWakeOnMotion*. Connect to interruptable pin on microcontroller.
    * SDA: connect to SDA.
    * SCL: connect to SCL.
 
@@ -496,7 +473,7 @@ The ICM42688 pins should be connected as:
 The ICM42688 pins should be connected as:
    * 3V3: this should be a 3.0V to 3.6V power source.
    * GND: ground.
-   * INT: (optional) used for the interrupt output setup in *enableDataReadyInterrupt* and *enableWakeOnMotion*. Connect to interruptable pin on microcontroller.
+   * INT1: (optional) used for the interrupt output setup in *enableDataReadyInterrupt* and *enableWakeOnMotion*. Connect to interruptable pin on microcontroller.
    * SDI: connect to MOSI.
    * SCK: connect to SCK.
    * SDO: connect to MISO.
