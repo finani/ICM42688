@@ -30,21 +30,23 @@ This library supports both I2C and SPI communication with the ICM42688. The *ICM
 
 ### I2C Object Declaration
 
-**ICM42688(TwoWire &bus,uint8_t address)**
+**ICM42688(TwoWire &bus, uint8_t address)**
 An ICM42688 object should be declared, specifying the I2C bus and ICM42688 I2C address. The ICM42688 I2C address will be 0x68 if the AD0 pin is grounded or 0x69 if the AD0 pin is pulled high. For example, the following code declares an ICM42688 object called *IMU* with an ICM42688 sensor located on I2C bus 0 with a sensor address of 0x68 (AD0 grounded).
 
 ```C++
-ICM42688 IMU(Wire,0x68);
+ICM42688 IMU(Wire, 0x68);
 ```
 
-### SPI Object Declaratioon
+### SPI Object Declaration
 
-**ICM42688(SPIClass &bus,uint8_t csPin)**
+**ICM42688FIFO(SPIClass &bus, uint8_t csPin, uint32_t SPI_HS_CLK=8000000)**
 An ICM42688 object should be declared, specifying the SPI bus and chip select pin used. Multiple ICM42688 or other SPI objects could be used on the same SPI bus, each with their own chip select pin. The chip select pin can be any available digital pin. For example, the following code declares an ICM42688 object called *IMU* with an ICM42688 sensor located on SPI bus 0 with chip select pin 10.
 
 ```C++
-ICM42688 IMU(SPI,10);
+ICM42688 IMU(SPI, 10);
 ```
+
+Note that the default high-speed SPI bus clock is set to 8 MHz, but the ICM 42688-p supports up to 24 MHz SPI clock. Use a faster clock for faster SPI data transfers when reading data.
 
 ### Common Setup Functions
 The following functions are used to setup the ICM42688 sensor. These should be called once before data collection, typically this is done in the Arduino *void setup()* function. The *begin* function should always be used. Optionally, the *setAccelRange* and *setGyroRange*, *setDlpfBandwidth*, and *setSrd* functions can be used to set the accelerometer and gyroscope full scale ranges, DLPF bandwidth, and SRD to values other than default. The *enableDataReadyInterrupt* and *disableDataReadyInterrupt* control whether the ICM42688 generates an interrupt on data ready. The *enableWakeOnMotion* puts the ICM42688 into a low power mode and enables an interrupt when motion detected is above a given threshold. Finally, *enableFifo* sets up and enables the FIFO buffer. These functions are described in detail, below.
@@ -362,7 +364,7 @@ An ICM42688FIFO object should be declared, specifying the I2C bus and ICM42688 I
 ICM42688FIFO IMU(Wire, 0x68);
 ```
 
-### SPI Object Declaratioon
+### SPI Object Declaration
 
 **ICM42688FIFO(SPIClass &bus, uint8_t csPin, uint32_t SPI_HS_CLK=8000000)**
 An ICM42688FIFO object should be declared, specifying the SPI bus and chip select pin used. Multiple ICM42688 or other SPI objects could be used on the same SPI bus, each with their own chip select pin. The chip select pin can be any available digital pin. For example, the following code declares an ICM42688FIFO object called *IMU* with an ICM42688 sensor located on SPI bus 0 with chip select pin 10.
