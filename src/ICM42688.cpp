@@ -39,8 +39,8 @@ int ICM42688::begin() {
   // reset the ICM42688
   reset();
 
-  // check the WHO AM I byte, expected value is 0x47 (decimal 71)
-  if(whoAmI() != 71) {
+  // check the WHO AM I byte
+  if(whoAmI() != WHO_AM_I) {
     return -3;
   }
 
@@ -49,18 +49,13 @@ int ICM42688::begin() {
     return -4;
   }
 
-  // setting accel range to 16G and 32kHz as default
-  if(writeRegister(UB0_REG_ACCEL_CONFIG0, ACCEL_FS_SEL_16G | ACCEL_ODR_32KHZ) < 0) {
-    return -5;
-  }
-  _accelScale = G * 16.0f/32767.5f; // setting the accel scale to 16G
-  _accelRange = ACCEL_RANGE_16G;
-  // setting the gyro range to 2000DPS and 32kHz as default
-  if(writeRegister(UB0_REG_GYRO_CONFIG0, GYRO_FS_SEL_2000DPS | GYRO_ODR_32KHZ) < 0) {
-    return -6;
-  }
-  _gyroScale = 2000.0f/32767.5f * _d2r; // setting the gyro scale to 2000DPS
-  _gyroRange = GYRO_RANGE_2000DPS;
+  // 16G is default -- do this to set up accel resolution scaling
+  int ret = setAccelFS(gpm16);
+  if (ret < 0) return ret;
+
+  // 2000DPS is default -- do this to set up gyro resolution scaling
+  ret = setGyroFS(dps2000);
+  if (ret < 0) return ret;
 
   // // disable inner filters (Notch filter, Anti-alias filter, UI filter block)
   // if (setFilters(false, false) < 0) {
@@ -76,118 +71,46 @@ int ICM42688::begin() {
 }
 
 /* sets the accelerometer full scale range to values other than default */
-int ICM42688::setAccelRange(AccelRange range) {
+int ICM42688::setAccelFS(AccelFS fssel) {
   // use low speed SPI for register setting
   _useSPIHS = false;
-  switch(range) {
-    case ACCEL_RANGE_2G: {
-      // setting the accel range to 2G
-      if(writeRegister(UB0_REG_ACCEL_CONFIG0, ACCEL_FS_SEL_2G) < 0) {
-        return -1;
-      }
-      _accelScale = G * 2.0f/32767.5f; // setting the accel scale to 2G
-      break;
-    }
-    case ACCEL_RANGE_4G: {
-      // setting the accel range to 4G
-      if(writeRegister(UB0_REG_ACCEL_CONFIG0, ACCEL_FS_SEL_4G) < 0) {
-        return -1;
-      }
-      _accelScale = G * 4.0f/32767.5f; // setting the accel scale to 4G
-      break;
-    }
-    case ACCEL_RANGE_8G: {
-      // setting the accel range to 8G
-      if(writeRegister(UB0_REG_ACCEL_CONFIG0, ACCEL_FS_SEL_8G) < 0) {
-        return -1;
-      }
-      _accelScale = G * 8.0f/32767.5f; // setting the accel scale to 8G
-      break;
-    }
-    case ACCEL_RANGE_16G: {
-      // setting the accel range to 16G
-      if(writeRegister(UB0_REG_ACCEL_CONFIG0, ACCEL_FS_SEL_16G) < 0) {
-        return -1;
-      }
-      _accelScale = G * 16.0f/32767.5f; // setting the accel scale to 16G
-      break;
-    }
-  }
-  _accelRange = range;
+
+  setBank(0);
+
+  // read current register value
+  uint8_t reg;
+  if (readRegisters(UB0_REG_ACCEL_CONFIG0, 1, &reg) < 0) return -1;
+
+  // only change FS_SEL in reg
+  reg = (fssel << 5) | (reg & 0x1F);
+
+  if (writeRegister(UB0_REG_ACCEL_CONFIG0, reg) < 0) return -2;
+
+  _accelScale = G * static_cast<double>(1 << (4 - fssel)) / 32768.0;
+  _accelFS = fssel;
+
   return 1;
 }
 
 /* sets the gyro full scale range to values other than default */
-int ICM42688::setGyroRange(GyroRange range) {
+int ICM42688::setGyroFS(GyroFS fssel) {
   // use low speed SPI for register setting
   _useSPIHS = false;
-  switch(range) {
-    case GYRO_RANGE_15_625DPS: {
-      // setting the gyro range to 15.625DPS
-      if(writeRegister(UB0_REG_GYRO_CONFIG0, GYRO_FS_SEL_15_625DPS) < 0) {
-        return -1;
-      }
-      _gyroScale = 15.625f/32767.5f * _d2r; // setting the gyro scale to 15.625DPS
-      break;
-    }
-    case GYRO_RANGE_31_25DPS: {
-      // setting the gyro range to 31.25DPS
-      if(writeRegister(UB0_REG_GYRO_CONFIG0, GYRO_FS_SEL_31_25DPS) < 0) {
-        return -1;
-      }
-      _gyroScale = 31.25f/32767.5f * _d2r; // setting the gyro scale to 31.25DPS
-      break;
-    }
-    case GYRO_RANGE_62_5DPS: {
-      // setting the gyro range to 62.5DPS
-      if(writeRegister(UB0_REG_GYRO_CONFIG0, GYRO_FS_SEL_62_5DPS) < 0) {
-        return -1;
-      }
-      _gyroScale = 62.5f/32767.5f * _d2r; // setting the gyro scale to 62.5DPS
-      break;
-    }
-    case GYRO_RANGE_125DPS: {
-      // setting the gyro range to 125DPS
-      if(writeRegister(UB0_REG_GYRO_CONFIG0, GYRO_FS_SEL_125DPS) < 0) {
-        return -1;
-      }
-      _gyroScale = 125.0f/32767.5f * _d2r; // setting the gyro scale to 125DPS
-      break;
-    }
-    case GYRO_RANGE_250DPS: {
-      // setting the gyro range to 250DPS
-      if(writeRegister(UB0_REG_GYRO_CONFIG0, GYRO_FS_SEL_250DPS) < 0) {
-        return -1;
-      }
-      _gyroScale = 250.0f/32767.5f * _d2r; // setting the gyro scale to 250DPS
-      break;
-    }
-    case GYRO_RANGE_500DPS: {
-      // setting the gyro range to 500DPS
-      if(writeRegister(UB0_REG_GYRO_CONFIG0, GYRO_FS_SEL_500DPS) < 0) {
-        return -1;
-      }
-      _gyroScale = 500.0f/32767.5f * _d2r; // setting the gyro scale to 500DPS
-      break;
-    }
-    case GYRO_RANGE_1000DPS: {
-      // setting the gyro range to 1000DPS
-      if(writeRegister(UB0_REG_GYRO_CONFIG0, GYRO_FS_SEL_1000DPS) < 0) {
-        return -1;
-      }
-      _gyroScale = 1000.0f/32767.5f * _d2r; // setting the gyro scale to 1000DPS
-      break;
-    }
-    case GYRO_RANGE_2000DPS: {
-      // setting the gyro range to 2000DPS
-      if(writeRegister(UB0_REG_GYRO_CONFIG0, GYRO_FS_SEL_2000DPS) < 0) {
-        return -1;
-      }
-      _gyroScale = 2000.0f/32767.5f * _d2r; // setting the gyro scale to 2000DPS
-      break;
-    }
-  }
-  _gyroRange = range;
+
+  setBank(0);
+
+  // read current register value
+  uint8_t reg;
+  if (readRegisters(UB0_REG_GYRO_CONFIG0, 1, &reg) < 0) return -1;
+
+  // only change FS_SEL in reg
+  reg = (fssel << 5) | (reg & 0x1F);
+
+  if (writeRegister(UB0_REG_GYRO_CONFIG0, reg) < 0) return -2;
+
+  _gyroScale = (2000. / static_cast<double>(1 << fssel)) / 32768.0 /** _d2r*/;
+  _gyroFS = fssel;
+
   return 1;
 }
 
@@ -498,10 +421,10 @@ void ICM42688_FIFO::getFifoTemperature_C(size_t *size,double* data) {
 
 /* estimates the gyro biases */
 int ICM42688::calibrateGyro() {
-  // set the range, bandwidth, and srd
-  if (setGyroRange(GYRO_RANGE_250DPS) < 0) {
-    return -1;
-  }
+  // set at a lower range (more resolution) since IMU not moving
+  const GyroFS current_fssel = _gyroFS;
+  if (setGyroFS(dps250) < 0) return -1;
+
   // take samples and find bias
   _gyroBD[0] = 0;
   _gyroBD[1] = 0;
@@ -517,10 +440,8 @@ int ICM42688::calibrateGyro() {
   _gyroB[1] = (double)_gyroBD[1];
   _gyroB[2] = (double)_gyroBD[2];
 
-  // set the range, bandwidth, and srd back to what they were
-  if (setGyroRange(_gyroRange) < 0) {
-    return -4;
-  }
+  // recover the full scale setting
+  if (setGyroFS(current_fssel) < 0) return -4;
   return 1;
 }
 
@@ -558,10 +479,10 @@ void ICM42688::setGyroBiasZ_rads(double bias) {
 this should be run for each axis in each direction (6 total) to find
 the min and max values along each */
 int ICM42688::calibrateAccel() {
-  // set the range, bandwidth, and srd
-  if (setAccelRange(ACCEL_RANGE_2G) < 0) {
-    return -1;
-  }
+  // set at a lower range (more resolution) since IMU not moving
+  const AccelFS current_fssel = _accelFS;
+  if (setAccelFS(gpm2) < 0) return -1;
+
   // take samples and find min / max
   _accBD[0] = 0;
   _accBD[1] = 0;
@@ -606,10 +527,8 @@ int ICM42688::calibrateAccel() {
     _accS[2] = G/((abs(_accMin[2]) + abs(_accMax[2])) / 2.0f);
   }
 
-  // set the range, bandwidth, and srd back to what they were
-  if (setAccelRange(_accelRange) < 0) {
-    return -4;
-  }
+  // recover the full scale setting
+  if (setAccelFS(current_fssel) < 0) return -4;
   return 1;
 }
 
@@ -745,7 +664,7 @@ void ICM42688::reset() {
   delay(1);
 }
 
-/* gets the ICM42688 WHO_AM_I register value, expected to be 0x98 */
+/* gets the ICM42688 WHO_AM_I register value */
 int ICM42688::whoAmI() {
   setBank(0);
 

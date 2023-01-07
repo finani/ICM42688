@@ -7,29 +7,30 @@
 
 class ICM42688{
   public:
-    enum GyroRange
-    {
-      GYRO_RANGE_15_625DPS,
-      GYRO_RANGE_31_25DPS,
-      GYRO_RANGE_62_5DPS,
-      GYRO_RANGE_125DPS,
-      GYRO_RANGE_250DPS,
-      GYRO_RANGE_500DPS,
-      GYRO_RANGE_1000DPS,
-      GYRO_RANGE_2000DPS
+
+    enum GyroFS : uint8_t {
+      dps2000 = 0x00,
+      dps1000 = 0x01,
+      dps500 = 0x02,
+      dps250 = 0x03,
+      dps125 = 0x04,
+      dps62_5 = 0x05,
+      dps31_25 = 0x06,
+      dps15_625 = 0x07
     };
-    enum AccelRange
-    {
-      ACCEL_RANGE_2G,
-      ACCEL_RANGE_4G,
-      ACCEL_RANGE_8G,
-      ACCEL_RANGE_16G
+
+    enum AccelFS : uint8_t {
+      gpm16 = 0x00,
+      gpm8 = 0x01,
+      gpm4 = 0x02,
+      gpm2 = 0x03
     };
+
     ICM42688(TwoWire &bus,uint8_t address);
     ICM42688(SPIClass &bus,uint8_t csPin);
     int begin();
-    int setAccelRange(AccelRange range);
-    int setGyroRange(GyroRange range);
+    int setAccelFS(AccelFS range);
+    int setGyroFS(GyroFS fssel);
     int setFilters(bool gyroFilters, bool accFilters);
     int enableDataReadyInterrupt();
     int disableDataReadyInterrupt();
@@ -98,8 +99,8 @@ class ICM42688{
     const double _tempScale = 333.87f;
     const double _tempOffset = 21.0f;
     // configuration
-    AccelRange _accelRange;
-    GyroRange _gyroRange;
+    AccelFS _accelFS;
+    GyroFS _gyroFS;
     // gyro bias estimation
     size_t _numSamples = 100;
     double _gyroBD[3] = {};
@@ -128,10 +129,10 @@ class ICM42688{
     // const uint8_t TEMP_OUT = 0x1D;
 
     // const uint8_t ACCEL_CONFIG0 = 0x50;
-    const uint8_t ACCEL_FS_SEL_2G = 0x60;
-    const uint8_t ACCEL_FS_SEL_4G = 0x40;
-    const uint8_t ACCEL_FS_SEL_8G = 0x20;
-    const uint8_t ACCEL_FS_SEL_16G = 0x00;
+    // const uint8_t ACCEL_FS_SEL_2G = 0x60;
+    // const uint8_t ACCEL_FS_SEL_4G = 0x40;
+    // const uint8_t ACCEL_FS_SEL_8G = 0x20;
+    // const uint8_t ACCEL_FS_SEL_16G = 0x00;
     const uint8_t ACCEL_ODR_32KHZ = 0x01;
     const uint8_t ACCEL_ODR_16KHZ = 0x02;
     const uint8_t ACCEL_ODR_8KHZ = 0x03;
@@ -149,14 +150,14 @@ class ICM42688{
     const uint8_t ACCEL_ODR_500HZ = 0x0F;
 
     // const uint8_t GYRO_CONFIG0 = 0x4F;
-    const uint8_t GYRO_FS_SEL_15_625DPS = 0xE0;
-    const uint8_t GYRO_FS_SEL_31_25DPS = 0xC0;
-    const uint8_t GYRO_FS_SEL_62_5DPS = 0xA0;
-    const uint8_t GYRO_FS_SEL_125DPS = 0x80;
-    const uint8_t GYRO_FS_SEL_250DPS = 0x60;
-    const uint8_t GYRO_FS_SEL_500DPS = 0x40;
-    const uint8_t GYRO_FS_SEL_1000DPS = 0x20;
-    const uint8_t GYRO_FS_SEL_2000DPS = 0x00;
+    // const uint8_t GYRO_FS_SEL_15_625DPS = 0xE0;
+    // const uint8_t GYRO_FS_SEL_31_25DPS = 0xC0;
+    // const uint8_t GYRO_FS_SEL_62_5DPS = 0xA0;
+    // const uint8_t GYRO_FS_SEL_125DPS = 0x80;
+    // const uint8_t GYRO_FS_SEL_250DPS = 0x60;
+    // const uint8_t GYRO_FS_SEL_500DPS = 0x40;
+    // const uint8_t GYRO_FS_SEL_1000DPS = 0x20;
+    // const uint8_t GYRO_FS_SEL_2000DPS = 0x00;
     const uint8_t GYRO_ODR_32KHZ = 0x01;
     const uint8_t GYRO_ODR_16KHZ = 0x02;
     const uint8_t GYRO_ODR_8KHZ = 0x03;
@@ -215,6 +216,8 @@ class ICM42688{
     int setBank(uint8_t bank);
     void reset();
     int whoAmI();
+
+    static constexpr uint8_t WHO_AM_I = 0x47; ///< expected value in UB0_REG_WHO_AM_I reg
 };
 
 class ICM42688_FIFO: public ICM42688 {
