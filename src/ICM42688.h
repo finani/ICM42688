@@ -105,9 +105,23 @@ class ICM42688
     int setGyroODR(ODR odr);
 
     int setFilters(bool gyroFilters, bool accFilters);
+
+    /**
+     * @brief      Enables the data ready interrupt.
+     *
+     *             - routes UI data ready interrupt to INT1
+     *             - push-pull, pulsed, active HIGH interrupts
+     *
+     * @return     ret < 0 if error
+     */
     int enableDataReadyInterrupt();
+
+    /**
+     * @brief      Masks the data ready interrupt
+     *
+     * @return     ret < 0 if error
+     */
     int disableDataReadyInterrupt();
-    uint8_t isInterrupted();
 
     /**
      * @brief      Transfers data from ICM 42688-p to microcontroller.
@@ -171,7 +185,6 @@ class ICM42688
     uint8_t _csPin = 0;
     bool _useSPI = false;
     bool _useSPIHS = false;
-    static constexpr uint8_t SPI_READ = 0x80;
     static constexpr uint32_t SPI_LS_CLOCK = 1000000; // 1 MHz
     uint32_t SPI_HS_CLOCK = 8000000; // 8 MHz
 
@@ -182,7 +195,6 @@ class ICM42688
     float _t = 0.0f;
     float _acc[3] = {};
     float _gyr[3] = {};
-    uint8_t _isInterrupted = 0;
 
     ///\brief Full scale resolution factors
     float _accelScale = 0.0f;
@@ -212,19 +224,6 @@ class ICM42688
 
     uint8_t _bank = 0; ///< current user bank
 
-    // const uint8_t INT_CONFIG = 0x14;
-    const uint8_t INT_HOLD_ANY = 0x08;
-    const uint8_t INT_PULSE_100us = 0x03;
-    // const uint8_t INT_SOURCE0 = 0x65;
-    const uint8_t RESET_DONE_INT1_EN = 0x10;
-    const uint8_t UI_DRDY_INT1_EN = 0x10;
-    // const uint8_t INT_STATUS = 0x2D;
-
-    // const uint8_t DEVICE_CONFIG = 0x11;
-    // const uint8_t INTF_CONFIG1 = 0x4D;
-    // const uint8_t PWR_MGMT0 = 0x4E;
-
-    // const uint8_t WHO_AM_I = 0x75;
     const uint8_t FIFO_EN = 0x23;
     const uint8_t FIFO_TEMP_EN = 0x04;
     const uint8_t FIFO_GYRO = 0x02;

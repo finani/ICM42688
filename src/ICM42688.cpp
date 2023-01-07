@@ -181,36 +181,39 @@ int ICM42688::setFilters(bool gyroFilters, bool accFilters) {
   return 1;
 }
 
-/* enables the data ready interrupt */
 int ICM42688::enableDataReadyInterrupt() {
   // use low speed SPI for register setting
   _useSPIHS = false;
-  /* setting the interrupt */
-  if (writeRegister(UB0_REG_INT_CONFIG, INT_PULSE_100us) < 0) { // setup interrupt, pulse
-  // if (writeRegister(UB0_REG_INT_CONFIG, INT_HOLD_ANY) < 0) { // setup interrupt, hold, any read operation
-    return -1;
-  }
-  if (writeRegister(UB0_REG_INT_SOURCE0, UI_DRDY_INT1_EN) < 0) { // set to data ready
-    return -2;
-  }
+
+  // push-pull, pulsed, active HIGH interrupts
+  if (writeRegister(UB0_REG_INT_CONFIG, 0x18 | 0x03) < 0) return -1;
+
+  // need to clear bit 4 to allow proper INT1 and INT2 operation
+  uint8_t reg;
+  if (readRegisters(UB0_REG_INT_CONFIG1, 1, &reg) < 0) return -2;
+  reg &= ~0x10;
+  if (writeRegister(UB0_REG_INT_CONFIG1, reg) < 0) return -3;
+
+  // route UI data ready interrupt to INT1
+  if (writeRegister(UB0_REG_INT_SOURCE0, 0x18) < 0) return -4;
+
   return 1;
 }
 
-/* disables the data ready interrupt */
 int ICM42688::disableDataReadyInterrupt() {
   // use low speed SPI for register setting
   _useSPIHS = false;
-  if(writeRegister(UB0_REG_INT_SOURCE0, RESET_DONE_INT1_EN) < 0) { // set to reset done (disable interrupt)
-    return -1;
-  }
-  return 1;
-}
 
-/* disables the data ready interrupt */
-uint8_t ICM42688::isInterrupted() {
-  _useSPIHS = false; // use the high speed SPI for data readout
-  readRegisters(UB0_REG_INT_STATUS, 1, &_isInterrupted);
-  return _isInterrupted & 0x08;
+  // set pin 4 to return to reset value
+  uint8_t reg;
+  if (readRegisters(UB0_REG_INT_CONFIG1, 1, &reg) < 0) return -1;
+  reg |= 0x10;
+  if (writeRegister(UB0_REG_INT_CONFIG1, reg) < 0) return -2;
+
+  // return reg to reset value
+  if (writeRegister(UB0_REG_INT_SOURCE0, 0x10) < 0) return -3;
+
+  return 1;
 }
 
 /* reads the most current data from ICM42688 and stores in buffer */
@@ -544,7 +547,7 @@ int ICM42688::readRegisters(uint8_t subAddress, uint8_t count, uint8_t* dest) {
       _spi->beginTransaction(SPISettings(SPI_LS_CLOCK, MSBFIRST, SPI_MODE3));
     }
     digitalWrite(_csPin,LOW); // select the ICM42688 chip
-    _spi->transfer(subAddress | SPI_READ); // specify the starting register address
+    _spi->transfer(subAddress | 0x80); // specify the starting register address
     for(uint8_t i = 0; i < count; i++) {
       dest[i] = _spi->transfer(0x00); // read the data
     }
