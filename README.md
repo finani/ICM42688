@@ -2,10 +2,14 @@
 Arduino library for communicating with the [ICM42688](https://invensense.tdk.com/products/motion-tracking/6-axis/icm-42688-p/) six-axis Inertial Measurement Units (IMU).
 
 # Description
-The InvenSense ICM42688 supports I2C, up to 400 kHz, and SPI communication, up to 1 MHz for register setup and 8 MHz for data reading. The following selectable full scale sensor ranges are available:
+The InvenSense ICM42688 supports I2C, up to 400 kHz, and SPI communication, up to 1 MHz for register setup and 24 MHz for data reading. The following selectable full scale sensor ranges are available:
 
 | Gyroscope Full Scale Range | Accelerometer Full Scale Range |
 | --- | --- |
+| +/- 15.6 (deg/s) |            |
+| +/- 31.2 (deg/s) |            |
+| +/- 62.5 (deg/s) |            |
+| +/- 125 (deg/s)  |            |
 | +/- 250 (deg/s)  | +/- 2 (g)  |
 | +/- 500 (deg/s)  | +/- 4 (g)  |
 | +/- 1000 (deg/s) | +/- 8 (g)  |
@@ -60,15 +64,15 @@ This function sets the accelerometer full scale range to the given  value. By de
 
 | Accelerometer Name | Accelerometer Full Scale Range |
 | ------------------ | ------------------------------ |
-| ACCEL_RANGE_2G     | +/- 2 (g)                      |
-| ACCEL_RANGE_4G     | +/- 4 (g)                      |
-| ACCEL_RANGE_8G     | +/- 8 (g)                      |
-| ACCEL_RANGE_16G    | +/- 16 (g)                     |
+| gpm2               | +/- 2 (g)                      |
+| gpm4               | +/- 4 (g)                      |
+| gpm8               | +/- 8 (g)                      |
+| gpm16              | +/- 16 (g)                     |
 
 This function returns a positive value on success and a negative value on failure. Please see the *Advanced_I2C example*. The following is an example of selecting an accelerometer full scale range of +/- 8g.
 
 ```C++
-status = IMU.setAccelRange(ICM42688::ACCEL_RANGE_8G);
+status = IMU.setAccelFS(ICM42688::gpm2);
 ```
 
 **(optional) int setGyroRange(GyroRange range)**
@@ -76,15 +80,19 @@ This function sets the gyroscope full scale range to the given  value. By defaul
 
 | Gyroscope Name     | Gyroscope Full Scale Range |
 | ------------------ | -------------------------- |
-| GYRO_RANGE_250DPS  | +/- 250 (deg/s)            |
-| GYRO_RANGE_500DPS  | +/- 500 (deg/s)            |
-| GYRO_RANGE_1000DPS | +/- 1000 (deg/s)           |
-| GYRO_RANGE_2000DPS | +/- 2000 (deg/s)           |
+| dps15_625          | +/- 15.625 (deg/s)         |
+| dps31_25           | +/- 31.25 (deg/s)          |
+| dps62_5            | +/- 62.5 (deg/s)           |
+| dps125             | +/- 125 (deg/s)            |
+| dps250             | +/- 250 (deg/s)            |
+| dps500             | +/- 500 (deg/s)            |
+| dps1000            | +/- 1000 (deg/s)           |
+| dps2000            | +/- 2000 (deg/s)           |
 
 This function returns a positive value on success and a negative value on failure. Please see the *Advanced_I2C example*. The following is an example of selecting an gyroscope full scale range of +/- 250 deg/s.
 
 ```C++
-status = IMU.setGyroRange(ICM42688::GYRO_RANGE_250DPS);
+status = IMU.setGyroFS(ICM42688::dps250);
 ```
 
 **(optional) int setFilters(bool gyroFilters, bool accFilters)**

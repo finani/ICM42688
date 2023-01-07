@@ -5,7 +5,8 @@
 #include "Wire.h"    // I2C library
 #include "SPI.h"     // SPI library
 
-class ICM42688{
+class ICM42688
+{
   public:
 
     enum GyroFS : uint8_t {
