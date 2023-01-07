@@ -23,7 +23,7 @@ void setup() {
 
 void loop() {
   // read the sensor
-  IMU.readSensor();
+  IMU.getAGT();
   // display the data
   Serial.print(IMU.getAccelX_mss(),6);
   Serial.print("\t");

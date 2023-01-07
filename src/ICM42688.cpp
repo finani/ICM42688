@@ -108,7 +108,7 @@ int ICM42688::setGyroFS(GyroFS fssel) {
 
   if (writeRegister(UB0_REG_GYRO_CONFIG0, reg) < 0) return -2;
 
-  _gyroScale = (2000. / static_cast<double>(1 << fssel)) / 32768.0 /** _d2r*/;
+  _gyroScale = (2000. / static_cast<double>(1 << fssel)) / 32768.0 * DEG2RAD;
   _gyroFS = fssel;
 
   return 1;
@@ -183,88 +183,27 @@ int ICM42688::setUseSPIHS(bool useSPIHS) {
 }
 
 /* reads the most current data from ICM42688 and stores in buffer */
-int ICM42688::readSensor() {
+int ICM42688::getAGT() {
   _useSPIHS = true; // use the high speed SPI for data readout
   // grab the data from the ICM42688
-  if (readRegisters(UB0_REG_TEMP_DATA1, 14, _buffer) < 0) {
-    return -1;
-  }
-  // combine into 16 bit values
-  _accCounts[0] = (((int16_t)_buffer[2]) << 8) | _buffer[3];
-  _accCounts[1] = (((int16_t)_buffer[4]) << 8) | _buffer[5];
-  _accCounts[2] = (((int16_t)_buffer[6]) << 8) | _buffer[7];
-  _tcounts = (((int16_t)_buffer[0]) << 8) | _buffer[1];
-  _gyroCounts[0] = (((int16_t)_buffer[8]) << 8) | _buffer[9];
-  _gyroCounts[1] = (((int16_t)_buffer[10]) << 8) | _buffer[11];
-  _gyroCounts[2] = (((int16_t)_buffer[12]) << 8) | _buffer[13];
-  _acc[0] = (((double)(tX[0]*_accCounts[0] + tX[1]*_accCounts[1] + tX[2]*_accCounts[2]) * _accelScale) - _accB[0])*_accS[0];
-  _acc[1] = (((double)(tY[0]*_accCounts[0] + tY[1]*_accCounts[1] + tY[2]*_accCounts[2]) * _accelScale) - _accB[1])*_accS[1];
-  _acc[2] = (((double)(tZ[0]*_accCounts[0] + tZ[1]*_accCounts[1] + tZ[2]*_accCounts[2]) * _accelScale) - _accB[2])*_accS[2];
-  _t = ((((double) _tcounts) - _tempOffset)/_tempScale) + _tempOffset;
-  _gyro[0] = ((double)(tX[0]*_gyroCounts[0] + tX[1]*_gyroCounts[1] + tX[2]*_gyroCounts[2]) * _gyroScale) - _gyroB[0];
-  _gyro[1] = ((double)(tY[0]*_gyroCounts[0] + tY[1]*_gyroCounts[1] + tY[2]*_gyroCounts[2]) * _gyroScale) - _gyroB[1];
-  _gyro[2] = ((double)(tZ[0]*_gyroCounts[0] + tZ[1]*_gyroCounts[1] + tZ[2]*_gyroCounts[2]) * _gyroScale) - _gyroB[2];
-  return 1;
-}
+  if (readRegisters(UB0_REG_TEMP_DATA1, 14, _buffer) < 0) return -1;
 
-/* reads the most current acc data from ICM42688 */
-int ICM42688::readAcc(double* acc) {
-  _useSPIHS = true; // use the high speed SPI for data readout
-  // grab the data from the ICM42688
-  if (readRegisters(UB0_REG_ACCEL_DATA_X1, 6, _buffer) < 0) {
-    return -1;
+  // combine bytes into 16 bit values
+  int16_t rawMeas[7]; // temp, accel xyz, gyro xyz
+  for (size_t i=0; i<7; i++) {
+    rawMeas[i] = ((int16_t)_buffer[i*2] << 8) | _buffer[i*2+1];
   }
-  // combine into 16 bit values
-  _accCounts[0] = (((int16_t)_buffer[0]) << 8) | _buffer[1];
-  _accCounts[1] = (((int16_t)_buffer[2]) << 8) | _buffer[3];
-  _accCounts[2] = (((int16_t)_buffer[4]) << 8) | _buffer[5];
-  _acc[0] = (((double)(tX[0]*_accCounts[0] + tX[1]*_accCounts[1] + tX[2]*_accCounts[2]) * _accelScale) - _accB[0])*_accS[0];
-  _acc[1] = (((double)(tY[0]*_accCounts[0] + tY[1]*_accCounts[1] + tY[2]*_accCounts[2]) * _accelScale) - _accB[1])*_accS[1];
-  _acc[2] = (((double)(tZ[0]*_accCounts[0] + tZ[1]*_accCounts[1] + tZ[2]*_accCounts[2]) * _accelScale) - _accB[2])*_accS[2];
-  memcpy(acc, _acc, 3*sizeof(double));
-  return 1;
-}
 
-/* reads the most current gyro data from ICM42688 */
-int ICM42688::readGyro(double* gyro) {
-  _useSPIHS = true; // use the high speed SPI for data readout
-  // grab the data from the ICM42688
-  if (readRegisters(UB0_REG_GYRO_DATA_X1, 6, _buffer) < 0) {
-    return -1;
-  }
-  // combine into 16 bit values
-  _gyroCounts[0] = (((int16_t)_buffer[0]) << 8) | _buffer[1];
-  _gyroCounts[1] = (((int16_t)_buffer[2]) << 8) | _buffer[3];
-  _gyroCounts[2] = (((int16_t)_buffer[4]) << 8) | _buffer[5];
-  _gyro[0] = ((double)(tX[0]*_gyroCounts[0] + tX[1]*_gyroCounts[1] + tX[2]*_gyroCounts[2]) * _gyroScale) - _gyroB[0];
-  _gyro[1] = ((double)(tY[0]*_gyroCounts[0] + tY[1]*_gyroCounts[1] + tY[2]*_gyroCounts[2]) * _gyroScale) - _gyroB[1];
-  _gyro[2] = ((double)(tZ[0]*_gyroCounts[0] + tZ[1]*_gyroCounts[1] + tZ[2]*_gyroCounts[2]) * _gyroScale) - _gyroB[2];
-  memcpy(gyro, _gyro, 3*sizeof(double));
-  return 1;
-}
+  _t = (static_cast<double>(rawMeas[0]) / TEMP_DATA_REG_SCALE) + TEMP_OFFSET;
 
-/* reads the most current accGyro data from ICM42688 */
-int ICM42688::readAccGyro(double* accGyro) {
-  _useSPIHS = true; // use the high speed SPI for data readout
-  // grab the data from the ICM42688
-  if (readRegisters(UB0_REG_ACCEL_DATA_X1, 12, _buffer) < 0) {
-    return -1;
-  }
-  // combine into 16 bit values
-  _accCounts[0] = (((int16_t)_buffer[0]) << 8) | _buffer[1];
-  _accCounts[1] = (((int16_t)_buffer[2]) << 8) | _buffer[3];
-  _accCounts[2] = (((int16_t)_buffer[4]) << 8) | _buffer[5];
-  _gyroCounts[0] = (((int16_t)_buffer[6]) << 8) | _buffer[7];
-  _gyroCounts[1] = (((int16_t)_buffer[8]) << 8) | _buffer[9];
-  _gyroCounts[2] = (((int16_t)_buffer[10]) << 8) | _buffer[11];
-  _acc[0] = (((double)(tX[0]*_accCounts[0] + tX[1]*_accCounts[1] + tX[2]*_accCounts[2]) * _accelScale) - _accB[0])*_accS[0];
-  _acc[1] = (((double)(tY[0]*_accCounts[0] + tY[1]*_accCounts[1] + tY[2]*_accCounts[2]) * _accelScale) - _accB[1])*_accS[1];
-  _acc[2] = (((double)(tZ[0]*_accCounts[0] + tZ[1]*_accCounts[1] + tZ[2]*_accCounts[2]) * _accelScale) - _accB[2])*_accS[2];
-  _gyro[0] = ((double)(tX[0]*_gyroCounts[0] + tX[1]*_gyroCounts[1] + tX[2]*_gyroCounts[2]) * _gyroScale) - _gyroB[0];
-  _gyro[1] = ((double)(tY[0]*_gyroCounts[0] + tY[1]*_gyroCounts[1] + tY[2]*_gyroCounts[2]) * _gyroScale) - _gyroB[1];
-  _gyro[2] = ((double)(tZ[0]*_gyroCounts[0] + tZ[1]*_gyroCounts[1] + tZ[2]*_gyroCounts[2]) * _gyroScale) - _gyroB[2];
-  memcpy(&accGyro[0], _acc, 3*sizeof(double));
-  memcpy(&accGyro[3], _gyro, 3*sizeof(double));
+  _acc[0] = ((rawMeas[1] * _accelScale) - _accB[0]) * _accS[0];
+  _acc[1] = ((rawMeas[2] * _accelScale) - _accB[1]) * _accS[1];
+  _acc[2] = ((rawMeas[3] * _accelScale) - _accB[2]) * _accS[2];
+
+  _gyr[0] = (rawMeas[4] * _gyroScale) - _gyrB[0];
+  _gyr[1] = (rawMeas[5] * _gyroScale) - _gyrB[1];
+  _gyr[2] = (rawMeas[6] * _gyroScale) - _gyrB[2];
+
   return 1;
 }
 
@@ -285,32 +224,32 @@ double ICM42688::getAccelZ_mss() {
 
 /* returns the gyroscope measurement in the x direction, rad/s */
 double ICM42688::getGyroX_rads() {
-  return _gyro[0];
+  return _gyr[0];
 }
 
 /* returns the gyroscope measurement in the y direction, rad/s */
 double ICM42688::getGyroY_rads() {
-  return _gyro[1];
+  return _gyr[1];
 }
 
 /* returns the gyroscope measurement in the z direction, rad/s */
 double ICM42688::getGyroZ_rads() {
-  return _gyro[2];
+  return _gyr[2];
 }
 
 /* returns the gyroscope measurement in the x direction, rad/s */
 double ICM42688::getGyroX_dps() {
-  return _gyro[0]*_r2d;
+  return _gyr[0] * RAD2DEG;
 }
 
 /* returns the gyroscope measurement in the y direction, rad/s */
 double ICM42688::getGyroY_dps() {
-  return _gyro[1]*_r2d;
+  return _gyr[1] * RAD2DEG;
 }
 
 /* returns the gyroscope measurement in the z direction, rad/s */
 double ICM42688::getGyroZ_dps() {
-  return _gyro[2]*_r2d;
+  return _gyr[2] * RAD2DEG;
 }
 
 /* returns the die temperature, C */
@@ -346,31 +285,33 @@ int ICM42688_FIFO::readFifo() {
     }
     if (_enFifoAccel) {
       // combine into 16 bit values
-      _accCounts[0] = (((int16_t)_buffer[0]) << 8) | _buffer[1];
-      _accCounts[1] = (((int16_t)_buffer[2]) << 8) | _buffer[3];
-      _accCounts[2] = (((int16_t)_buffer[4]) << 8) | _buffer[5];
+      int16_t rawMeas[3];
+      rawMeas[0] = (((int16_t)_buffer[0]) << 8) | _buffer[1];
+      rawMeas[1] = (((int16_t)_buffer[2]) << 8) | _buffer[3];
+      rawMeas[2] = (((int16_t)_buffer[4]) << 8) | _buffer[5];
       // transform and convert to double values
-      _axFifo[i] = (((double)(tX[0]*_accCounts[0] + tX[1]*_accCounts[1] + tX[2]*_accCounts[2]) * _accelScale)-_accB[0])*_accS[0];
-      _ayFifo[i] = (((double)(tY[0]*_accCounts[0] + tY[1]*_accCounts[1] + tY[2]*_accCounts[2]) * _accelScale)-_accB[1])*_accS[1];
-      _azFifo[i] = (((double)(tZ[0]*_accCounts[0] + tZ[1]*_accCounts[1] + tZ[2]*_accCounts[2]) * _accelScale)-_accB[2])*_accS[2];
-      _aSize = _fifoSize/_fifoFrameSize;
+      _axFifo[i] = ((rawMeas[0] * _accelScale) - _accB[0]) * _accS[0];
+      _ayFifo[i] = ((rawMeas[1] * _accelScale) - _accB[1]) * _accS[1];
+      _azFifo[i] = ((rawMeas[2] * _accelScale) - _accB[2]) * _accS[2];
+      _aSize = _fifoSize / _fifoFrameSize;
     }
     if (_enFifoTemp) {
       // combine into 16 bit values
-      _tcounts = (((int16_t)_buffer[0 + _enFifoAccel*6]) << 8) | _buffer[1 + _enFifoAccel*6];
+      int16_t rawMeas = (((int16_t)_buffer[0 + _enFifoAccel*6]) << 8) | _buffer[1 + _enFifoAccel*6];
       // transform and convert to double values
-      _tFifo[i] = ((((double) _tcounts) - _tempOffset)/_tempScale) + _tempOffset;
+      _tFifo[i] = (static_cast<double>(rawMeas) / TEMP_DATA_REG_SCALE) + TEMP_OFFSET;
       _tSize = _fifoSize/_fifoFrameSize;
     }
     if (_enFifoGyro) {
       // combine into 16 bit values
-      _gyroCounts[0] = (((int16_t)_buffer[0 + _enFifoAccel*6 + _enFifoTemp*2]) << 8) | _buffer[1 + _enFifoAccel*6 + _enFifoTemp*2];
-      _gyroCounts[1] = (((int16_t)_buffer[2 + _enFifoAccel*6 + _enFifoTemp*2]) << 8) | _buffer[3 + _enFifoAccel*6 + _enFifoTemp*2];
-      _gyroCounts[2] = (((int16_t)_buffer[4 + _enFifoAccel*6 + _enFifoTemp*2]) << 8) | _buffer[5 + _enFifoAccel*6 + _enFifoTemp*2];
+      int16_t rawMeas[3];
+      rawMeas[0] = (((int16_t)_buffer[0 + _enFifoAccel*6 + _enFifoTemp*2]) << 8) | _buffer[1 + _enFifoAccel*6 + _enFifoTemp*2];
+      rawMeas[1] = (((int16_t)_buffer[2 + _enFifoAccel*6 + _enFifoTemp*2]) << 8) | _buffer[3 + _enFifoAccel*6 + _enFifoTemp*2];
+      rawMeas[2] = (((int16_t)_buffer[4 + _enFifoAccel*6 + _enFifoTemp*2]) << 8) | _buffer[5 + _enFifoAccel*6 + _enFifoTemp*2];
       // transform and convert to double values
-      _gxFifo[i] = ((double)(tX[0]*_gyroCounts[0] + tX[1]*_gyroCounts[1] + tX[2]*_gyroCounts[2]) * _gyroScale) - _gyroB[0];
-      _gyFifo[i] = ((double)(tY[0]*_gyroCounts[0] + tY[1]*_gyroCounts[1] + tY[2]*_gyroCounts[2]) * _gyroScale) - _gyroB[1];
-      _gzFifo[i] = ((double)(tZ[0]*_gyroCounts[0] + tZ[1]*_gyroCounts[1] + tZ[2]*_gyroCounts[2]) * _gyroScale) - _gyroB[2];
+      _gxFifo[i] = (rawMeas[0] * _gyroScale) - _gyrB[0];
+      _gyFifo[i] = (rawMeas[1] * _gyroScale) - _gyrB[1];
+      _gzFifo[i] = (rawMeas[2] * _gyroScale) - _gyrB[2];
       _gSize = _fifoSize/_fifoFrameSize;
     }
   }
@@ -430,15 +371,15 @@ int ICM42688::calibrateGyro() {
   _gyroBD[1] = 0;
   _gyroBD[2] = 0;
   for (size_t i=0; i < _numSamples; i++) {
-    readSensor();
-    _gyroBD[0] += (getGyroX_rads() + _gyroB[0])/((double)_numSamples);
-    _gyroBD[1] += (getGyroY_rads() + _gyroB[1])/((double)_numSamples);
-    _gyroBD[2] += (getGyroZ_rads() + _gyroB[2])/((double)_numSamples);
+    getAGT();
+    _gyroBD[0] += (getGyroX_rads() + _gyrB[0])/((double)_numSamples);
+    _gyroBD[1] += (getGyroY_rads() + _gyrB[1])/((double)_numSamples);
+    _gyroBD[2] += (getGyroZ_rads() + _gyrB[2])/((double)_numSamples);
     delay(20);
   }
-  _gyroB[0] = (double)_gyroBD[0];
-  _gyroB[1] = (double)_gyroBD[1];
-  _gyroB[2] = (double)_gyroBD[2];
+  _gyrB[0] = (double)_gyroBD[0];
+  _gyrB[1] = (double)_gyroBD[1];
+  _gyrB[2] = (double)_gyroBD[2];
 
   // recover the full scale setting
   if (setGyroFS(current_fssel) < 0) return -4;
@@ -447,32 +388,32 @@ int ICM42688::calibrateGyro() {
 
 /* returns the gyro bias in the X direction, rad/s */
 double ICM42688::getGyroBiasX_rads() {
-  return _gyroB[0];
+  return _gyrB[0];
 }
 
 /* returns the gyro bias in the Y direction, rad/s */
 double ICM42688::getGyroBiasY_rads() {
-  return _gyroB[1];
+  return _gyrB[1];
 }
 
 /* returns the gyro bias in the Z direction, rad/s */
 double ICM42688::getGyroBiasZ_rads() {
-  return _gyroB[2];
+  return _gyrB[2];
 }
 
 /* sets the gyro bias in the X direction to bias, rad/s */
 void ICM42688::setGyroBiasX_rads(double bias) {
-  _gyroB[0] = bias;
+  _gyrB[0] = bias;
 }
 
 /* sets the gyro bias in the Y direction to bias, rad/s */
 void ICM42688::setGyroBiasY_rads(double bias) {
-  _gyroB[1] = bias;
+  _gyrB[1] = bias;
 }
 
 /* sets the gyro bias in the Z direction to bias, rad/s */
 void ICM42688::setGyroBiasZ_rads(double bias) {
-  _gyroB[2] = bias;
+  _gyrB[2] = bias;
 }
 
 /* finds bias and scale factor calibration for the accelerometer,
@@ -488,7 +429,7 @@ int ICM42688::calibrateAccel() {
   _accBD[1] = 0;
   _accBD[2] = 0;
   for (size_t i=0; i < _numSamples; i++) {
-    readSensor();
+    getAGT();
     _accBD[0] += (getAccelX_mss()/_accS[0] + _accB[0])/((double)_numSamples);
     _accBD[1] += (getAccelY_mss()/_accS[1] + _accB[1])/((double)_numSamples);
     _accBD[2] += (getAccelZ_mss()/_accS[2] + _accB[2])/((double)_numSamples);
