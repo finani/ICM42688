@@ -1,8 +1,7 @@
 #include "ICM42688.h"
 
 // an ICM42688 object with the ICM42688 sensor on SPI bus 0 and chip select pin 10
-ICM42688 IMU(SPI,10);
-int status;
+ICM42688 IMU(SPI, 10);
 
 void setup() {
   // serial to display data
@@ -10,7 +9,7 @@ void setup() {
   while(!Serial) {}
 
   // start communication with IMU
-  status = IMU.begin();
+  int status = IMU.begin();
   if (status < 0) {
     Serial.println("IMU initialization unsuccessful");
     Serial.println("Check IMU wiring or try cycling power");

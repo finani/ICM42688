@@ -1,9 +1,9 @@
 #include "ICM42688.h"
-// TODO: Need to test this with the ICM42688
 
 // an ICM42688 object with the ICM42688 sensor on SPI bus 0 and chip select pin 10
-ICM42688 IMU(SPI,10);
-int status;
+ICM42688 IMU(SPI, 10);
+
+volatile bool dataReady = false;
 
 void setup() {
   // serial to display data
@@ -11,7 +11,7 @@ void setup() {
   while(!Serial) {}
 
   // start communication with IMU
-  status = IMU.begin();
+  int status = IMU.begin();
   if (status < 0) {
     Serial.println("IMU initialization unsuccessful");
     Serial.println("Check IMU wiring or try cycling power");
@@ -19,35 +19,45 @@ void setup() {
     Serial.println(status);
     while(1) {}
   }
-  // setting DLPF bandwidth to 20 Hz
-  IMU.setDlpfBandwidth(ICM42688::DLPF_BANDWIDTH_21HZ);
-  // setting SRD to 19 for a 50 Hz update rate
-  IMU.setSrd(19);
-  // enabling the data ready interrupt
-  IMU.enableDataReadyInterrupt();
+
   // attaching the interrupt to microcontroller pin 1
-  pinMode(1,INPUT);
-  attachInterrupt(1,getIMU,RISING);
+  pinMode(22, INPUT);
+  attachInterrupt(22, setImuFlag, RISING);
+
+  // set output data rate to 12.5 Hz
+  imu.setAccelODR(ICM42688::odr12_5);
+  imu.setGyroODR(ICM42688::odr12_5);
+
+  // enabling the data ready interrupt
+  imu.enableDataReadyInterrupt(); 
+
   Serial.println("ax,ay,az,gx,gy,gz,temp_C");
 }
 
-void loop() {}
+void loop() {
+  if (!dataReady) return;
 
-void getIMU(){
+  dataReady = false;
+
   // read the sensor
-  IMU.getAGT();
+  imu.getAGT();
+  
   // display the data
-  Serial.print(IMU.accX(),6);
+  Serial.print(imu.accX(),6);
   Serial.print("\t");
-  Serial.print(IMU.accY(),6);
+  Serial.print(imu.accY(),6);
   Serial.print("\t");
-  Serial.print(IMU.accZ(),6);
+  Serial.print(imu.accZ(),6);
   Serial.print("\t");
-  Serial.print(IMU.gyrX(),6);
+  Serial.print(imu.gyrX(),6);
   Serial.print("\t");
-  Serial.print(IMU.gyrY(),6);
+  Serial.print(imu.gyrY(),6);
   Serial.print("\t");
-  Serial.print(IMU.gyrZ(),6);
+  Serial.print(imu.gyrZ(),6);
   Serial.print("\t");
-  Serial.println(IMU.temp(),6);
+  Serial.println(imu.temp(),6);
+}
+
+void setImuFlag() {
+  dataReady = true;
 }

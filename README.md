@@ -49,14 +49,13 @@ ICM42688 IMU(SPI, 10);
 Note that the default high-speed SPI bus clock is set to 8 MHz, but the ICM 42688-p supports up to 24 MHz SPI clock. Use a faster clock for faster SPI data transfers when reading data.
 
 ### Common Setup Functions
-The following functions are used to setup the ICM42688 sensor. These should be called once before data collection, typically this is done in the Arduino *void setup()* function. The *begin* function should always be used. Optionally, the *setAccelRange* and *setGyroRange*, *setDlpfBandwidth*, and *setSrd* functions can be used to set the accelerometer and gyroscope full scale ranges, DLPF bandwidth, and SRD to values other than default. The *enableDataReadyInterrupt* and *disableDataReadyInterrupt* control whether the ICM42688 generates an interrupt on data ready. The *enableWakeOnMotion* puts the ICM42688 into a low power mode and enables an interrupt when motion detected is above a given threshold. Finally, *enableFifo* sets up and enables the FIFO buffer. These functions are described in detail, below.
+The following functions are used to setup the ICM42688 sensor. These should be called once before data collection, typically this is done in the Arduino `setup()` function. The `begin()` function should always be used. Optionally, the `setAccelFS` and `setGyroFS`, `setAccelODR`, and `setGyroODR` functions can be used to set the accelerometer and gyroscope full scale ranges and output data rate to values other than default. The `enableDataReadyInterrupt` and `disableDataReadyInterrupt` control whether the ICM42688 generates an interrupt on data ready. The `enableFifo` sets up and enables the FIFO buffer. These functions are described in detail, below.
 
 **int begin()**
 This should be called in your setup function. It initializes communication with the ICM42688, sets up the sensor for reading data, and estimates the gyro bias, which is removed from the sensor data. This function returns a positive value on a successful initialization and returns a negative value on an unsuccesful initialization. If unsuccessful, please check your wiring or try resetting power to the sensor. The following is an example of setting up the ICM42688.
 
 ```C++
-int status;
-status = IMU.begin();
+int status = IMU.begin();
 ```
 
 #### Configuration Functions
@@ -138,52 +137,52 @@ The gyro bias is automatically estimated during the *begin()* function and remov
 status = IMU.calibrateGyro();
 ```
 
-**(optional) float getGyroBiasX_rads()**
-This function returns the current gyro bias in the X direction in units of rad/s.
+**(optional) float getGyroBiasX()**
+This function returns the current gyro bias in the X direction in units of deg/s.
 
 ```C++
 float gxb;
-gxb = IMU.getGyroBiasX_rads();
+gxb = IMU.getGyroBiasX();
 ```
 
-**(optional) float getGyroBiasY_rads()**
-This function returns the current gyro bias in the Y direction in units of rad/s.
+**(optional) float getGyroBiasY()**
+This function returns the current gyro bias in the Y direction in units of deg/s.
 
 ```C++
 float gyb;
-gyb = IMU.getGyroBiasY_rads();
+gyb = IMU.getGyroBiasY();
 ```
 
-**(optional) float getGyroBiasZ_rads()**
-This function returns the current gyro bias in the Z direction in units of rad/s.
+**(optional) float getGyroBiasZ()**
+This function returns the current gyro bias in the Z direction in units of deg/s.
 
 ```C++
 float gzb;
-gzb = IMU.getGyroBiasZ_rads();
+gzb = IMU.getGyroBiasZ();
 ```
 
-**(optional) void setGyroBiasX_rads(float bias)**
-This function sets the gyro bias being used in the X direction to the input value in units of rad/s.
+**(optional) void setGyroBiasX(float bias)**
+This function sets the gyro bias being used in the X direction to the input value in units of deg/s.
 
 ```C++
-float gxb = 0.001; // gyro bias of 0.001 rad/s
-IMU.setGyroBiasX_rads(gxb);
+float gxb = 0.001; // gyro bias of 0.001 deg/s
+IMU.setGyroBiasX(gxb);
 ```
 
-**(optional) void setGyroBiasY_rads(float bias)**
-This function sets the gyro bias being used in the Y direction to the input value in units of rad/s.
+**(optional) void setGyroBiasY(float bias)**
+This function sets the gyro bias being used in the Y direction to the input value in units of deg/s.
 
 ```C++
-float gyb = 0.001; // gyro bias of 0.001 rad/s
-IMU.setGyroBiasY_rads(gyb);
+float gyb = 0.001; // gyro bias of 0.001 deg/s
+IMU.setGyroBiasY(gyb);
 ```
 
-**(optional) void setGyroBiasZ_rads(float bias)**
-This function sets the gyro bias being used in the Z direction to the input value in units of rad/s.
+**(optional) void setGyroBiasZ(float bias)**
+This function sets the gyro bias being used in the Z direction to the input value in units of deg/s.
 
 ```C++
-float gzb = 0.001; // gyro bias of 0.001 rad/s
-IMU.setGyroBiasZ_rads(gzb);
+float gzb = 0.001; // gyro bias of 0.001 deg/s
+IMU.setGyroBiasZ(gzb);
 ```
 
 **(optional) int calibrateAccel()**
@@ -418,9 +417,8 @@ IMU.getFifoTemperature_C(&samples,temp);
 
 * **Basic_I2C**: demonstrates declaring an *ICM42688* object, initializing the sensor, and collecting data. I2C is used to communicate with the ICM42688 sensor.
 * **Basic_SPI**: demonstrates declaring an *ICM42688* object, initializing the sensor, and collecting data. SPI is used to communicate with the ICM42688 sensor.
-* **Advanced_I2C**: demonstrates a more advanced setup. In this case, the accelerometer and gyroscope full scale ranges, DLPF, and SRD are set to non-default values. I2C is used to communicate with the ICM42688 sensor.
+* **Advanced_I2C**: demonstrates a more advanced setup. In this case, the accelerometer and gyroscope full scale ranges are set to non-default values. I2C is used to communicate with the ICM42688 sensor.
 * **Interrupt_SPI**: demonstrates having the ICM42688 sensor create an interrupt pulse when data is ready, which is used to drive data collection at the specified rate. SPI is used to communicate with the ICM42688 sensor.
-* **WOM_I2C**: demonstrates setting up and using the wake on motion interrupt. I2C is used to communicate with the ICM42688 sensor.
 * **FIFO_SPI**: demonstrates setting up and using the FIFO buffer. SPI is used to communicate with the ICM42688 sensor.
 
 # Wiring and Pullups
