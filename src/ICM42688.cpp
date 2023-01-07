@@ -34,7 +34,7 @@ int ICM42688::begin() {
     // starting the I2C bus
     _i2c->begin();
     // setting the I2C clock
-    _i2c->setClock(_i2cRate);
+    _i2c->setClock(I2C_CLK);
   }
 
   // reset the ICM42688
@@ -320,20 +320,20 @@ void ICM42688_FIFO::getFifoAccelZ_mss(size_t *size,float* data) {
   memcpy(data,_azFifo,_aSize*sizeof(float));
 }
 
-/* returns the gyroscope FIFO size and data in the x direction, rad/s */
-void ICM42688_FIFO::getFifoGyroX_rads(size_t *size,float* data) {
+/* returns the gyroscope FIFO size and data in the x direction, dps */
+void ICM42688_FIFO::getFifoGyroX(size_t *size,float* data) {
   *size = _gSize;
   memcpy(data,_gxFifo,_gSize*sizeof(float));
 }
 
-/* returns the gyroscope FIFO size and data in the y direction, rad/s */
-void ICM42688_FIFO::getFifoGyroY_rads(size_t *size,float* data) {
+/* returns the gyroscope FIFO size and data in the y direction, dps */
+void ICM42688_FIFO::getFifoGyroY(size_t *size,float* data) {
   *size = _gSize;
   memcpy(data,_gyFifo,_gSize*sizeof(float));
 }
 
-/* returns the gyroscope FIFO size and data in the z direction, rad/s */
-void ICM42688_FIFO::getFifoGyroZ_rads(size_t *size,float* data) {
+/* returns the gyroscope FIFO size and data in the z direction, dps */
+void ICM42688_FIFO::getFifoGyroZ(size_t *size,float* data) {
   *size = _gSize;
   memcpy(data,_gzFifo,_gSize*sizeof(float));
 }
@@ -354,49 +354,49 @@ int ICM42688::calibrateGyro() {
   _gyroBD[0] = 0;
   _gyroBD[1] = 0;
   _gyroBD[2] = 0;
-  for (size_t i=0; i < _numSamples; i++) {
+  for (size_t i=0; i < NUM_CALIB_SAMPLES; i++) {
     getAGT();
-    _gyroBD[0] += (gyrX() + _gyrB[0])/((float)_numSamples);
-    _gyroBD[1] += (gyrY() + _gyrB[1])/((float)_numSamples);
-    _gyroBD[2] += (gyrZ() + _gyrB[2])/((float)_numSamples);
-    delay(20);
+    _gyroBD[0] += (gyrX() + _gyrB[0]) / NUM_CALIB_SAMPLES;
+    _gyroBD[1] += (gyrY() + _gyrB[1]) / NUM_CALIB_SAMPLES;
+    _gyroBD[2] += (gyrZ() + _gyrB[2]) / NUM_CALIB_SAMPLES;
+    delay(1);
   }
-  _gyrB[0] = (float)_gyroBD[0];
-  _gyrB[1] = (float)_gyroBD[1];
-  _gyrB[2] = (float)_gyroBD[2];
+  _gyrB[0] = _gyroBD[0];
+  _gyrB[1] = _gyroBD[1];
+  _gyrB[2] = _gyroBD[2];
 
   // recover the full scale setting
   if (setGyroFS(current_fssel) < 0) return -4;
   return 1;
 }
 
-/* returns the gyro bias in the X direction, rad/s */
-float ICM42688::getGyroBiasX_rads() {
+/* returns the gyro bias in the X direction, dps */
+float ICM42688::getGyroBiasX() {
   return _gyrB[0];
 }
 
-/* returns the gyro bias in the Y direction, rad/s */
-float ICM42688::getGyroBiasY_rads() {
+/* returns the gyro bias in the Y direction, dps */
+float ICM42688::getGyroBiasY() {
   return _gyrB[1];
 }
 
-/* returns the gyro bias in the Z direction, rad/s */
-float ICM42688::getGyroBiasZ_rads() {
+/* returns the gyro bias in the Z direction, dps */
+float ICM42688::getGyroBiasZ() {
   return _gyrB[2];
 }
 
-/* sets the gyro bias in the X direction to bias, rad/s */
-void ICM42688::setGyroBiasX_rads(float bias) {
+/* sets the gyro bias in the X direction to bias, dps */
+void ICM42688::setGyroBiasX(float bias) {
   _gyrB[0] = bias;
 }
 
-/* sets the gyro bias in the Y direction to bias, rad/s */
-void ICM42688::setGyroBiasY_rads(float bias) {
+/* sets the gyro bias in the Y direction to bias, dps */
+void ICM42688::setGyroBiasY(float bias) {
   _gyrB[1] = bias;
 }
 
-/* sets the gyro bias in the Z direction to bias, rad/s */
-void ICM42688::setGyroBiasZ_rads(float bias) {
+/* sets the gyro bias in the Z direction to bias, dps */
+void ICM42688::setGyroBiasZ(float bias) {
   _gyrB[2] = bias;
 }
 
@@ -412,30 +412,30 @@ int ICM42688::calibrateAccel() {
   _accBD[0] = 0;
   _accBD[1] = 0;
   _accBD[2] = 0;
-  for (size_t i=0; i < _numSamples; i++) {
+  for (size_t i=0; i < NUM_CALIB_SAMPLES; i++) {
     getAGT();
-    _accBD[0] += (accX()/_accS[0] + _accB[0])/((float)_numSamples);
-    _accBD[1] += (accY()/_accS[1] + _accB[1])/((float)_numSamples);
-    _accBD[2] += (accZ()/_accS[2] + _accB[2])/((float)_numSamples);
-    delay(20);
+    _accBD[0] += (accX()/_accS[0] + _accB[0]) / NUM_CALIB_SAMPLES;
+    _accBD[1] += (accY()/_accS[1] + _accB[1]) / NUM_CALIB_SAMPLES;
+    _accBD[2] += (accZ()/_accS[2] + _accB[2]) / NUM_CALIB_SAMPLES;
+    delay(1);
   }
   if (_accBD[0] > 0.9f) {
-    _accMax[0] = (float)_accBD[0];
+    _accMax[0] = _accBD[0];
   }
   if (_accBD[1] > 0.9f) {
-    _accMax[1] = (float)_accBD[1];
+    _accMax[1] = _accBD[1];
   }
   if (_accBD[2] > 0.9f) {
-    _accMax[2] = (float)_accBD[2];
+    _accMax[2] = _accBD[2];
   }
   if (_accBD[0] < -0.9f) {
-    _accMin[0] = (float)_accBD[0];
+    _accMin[0] = _accBD[0];
   }
   if (_accBD[1] < -0.9f) {
-    _accMin[1] = (float)_accBD[1];
+    _accMin[1] = _accBD[1];
   }
   if (_accBD[2] < -0.9f) {
-    _accMin[2] = (float)_accBD[2];
+    _accMin[2] = _accBD[2];
   }
 
   // find bias and scale factor
