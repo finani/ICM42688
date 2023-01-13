@@ -1,7 +1,10 @@
 #include "ICM42688.h"
 
-// an ICM42688 object with the ICM42688 sensor on SPI bus 0 and chip select pin 10
-ICM42688 IMU(SPI, 10);
+static const uint8_t CS_PIN = 10;
+static const uint8_t INT_PIN = 22;
+
+// an ICM42688 object with the ICM42688 sensor on SPI bus 0 and chip select pin CS_PIN
+ICM42688 imu(SPI, CS_PIN);
 
 volatile bool dataReady = false;
 
@@ -11,7 +14,7 @@ void setup() {
   while(!Serial) {}
 
   // start communication with IMU
-  int status = IMU.begin();
+  int status = imu.begin();
   if (status < 0) {
     Serial.println("IMU initialization unsuccessful");
     Serial.println("Check IMU wiring or try cycling power");
@@ -20,9 +23,9 @@ void setup() {
     while(1) {}
   }
 
-  // attaching the interrupt to microcontroller pin 1
-  pinMode(22, INPUT);
-  attachInterrupt(22, setImuFlag, RISING);
+  // attaching the interrupt to microcontroller pin INT_PIN
+  pinMode(INT_PIN, INPUT);
+  attachInterrupt(INT_PIN, setImuFlag, RISING);
 
   // set output data rate to 12.5 Hz
   imu.setAccelODR(ICM42688::odr12_5);
