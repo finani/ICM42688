@@ -156,6 +156,13 @@ class ICM42688
      */
     float temp() const { return _t; }
 
+    int16_t getAccelX_count();
+    int16_t getAccelY_count();
+    int16_t getAccelZ_count();
+    int16_t getGyroX_count();
+    int16_t getGyroY_count();
+    int16_t getGyroZ_count();
+
     int calibrateGyro();
     float getGyroBiasX();
     float getGyroBiasY();
@@ -179,6 +186,8 @@ class ICM42688
     TwoWire *_i2c = {};
     static constexpr uint32_t I2C_CLK = 400000; // 400 kHz
     size_t _numBytes = 0; // number of bytes received from I2C
+
+    int16_t _rawMeas[7]; // temp, accel xyz, gyro xyz
 
     ///\brief SPI Communication
     SPIClass *_spi = {};
