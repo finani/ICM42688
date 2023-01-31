@@ -33,14 +33,12 @@ void setup() {
   pinMode(INT_PIN, INPUT);
   attachInterrupt(INT_PIN, setImuFlag, RISING);
 
-  // set output data rate to 12.5 Hz
-  imu.setAccelODR(ICM42688::odr12_5);
-  imu.setGyroODR(ICM42688::odr12_5);
+  // set output data rate
+  imu.setAccelODR(ICM42688::odr8k);
+  imu.setGyroODR(ICM42688::odr8k);
 
   // enabling the data ready interrupt
   imu.enableDataReadyInterrupt(); 
-
-  Serial.println("ax,ay,az,gx,gy,gz,temp_C");
 }
 
 void loop() {
@@ -51,20 +49,18 @@ void loop() {
   // read the sensor
   imu.getAGT();
   
-  // display the data
-  Serial.print(imu.accX(),6);
+  // display the raw data
+  Serial.print(imu.getAccelX_count());
   Serial.print("\t");
-  Serial.print(imu.accY(),6);
+  Serial.print(imu.getAccelY_count());
   Serial.print("\t");
-  Serial.print(imu.accZ(),6);
+  Serial.print(imu.getAccelZ_count());
   Serial.print("\t");
-  Serial.print(imu.gyrX(),6);
+  Serial.print(imu.getGyroX_count());
   Serial.print("\t");
-  Serial.print(imu.gyrY(),6);
+  Serial.print(imu.getGyroY_count());
   Serial.print("\t");
-  Serial.print(imu.gyrZ(),6);
-  Serial.print("\t");
-  Serial.println(imu.temp(),6);
+  Serial.println(imu.getGyroZ_count());
 }
 
 void setImuFlag() {
