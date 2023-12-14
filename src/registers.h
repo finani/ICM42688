@@ -1,7 +1,7 @@
 #ifndef ICM42688_REGISTERS_H_
 #define ICM42688_REGISTERS_H_
 
-#include <cstdint>
+#include <stdint.h>
 
 namespace ICM42688reg {
 
