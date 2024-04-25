@@ -130,6 +130,7 @@ class ICM42688
      * @return     ret < 0 if error
      */
     int getAGT();
+    int getRawAGT();
 
     /**
      * @brief      Get accelerometer data, per axis
@@ -156,12 +157,34 @@ class ICM42688
      */
     float temp() const { return _t; }
 
-    int16_t getAccelX_count();
-    int16_t getAccelY_count();
-    int16_t getAccelZ_count();
-    int16_t getGyroX_count();
-    int16_t getGyroY_count();
-    int16_t getGyroZ_count();
+
+    /**
+     * @brief      Get accelerometer Raw data, per axis
+     *
+     * @return     Acceleration in bytes
+     */
+    int16_t rawAccX() const { return _rawAcc[0]; }
+    int16_t rawAccY() const { return _rawAcc[1]; }
+    int16_t rawAccZ() const { return _rawAcc[2]; }
+
+    /**
+     * @brief      Get gyro raw data, per axis
+     *
+     * @return     Angular velocity in bytes
+     */
+    int16_t rawGyrX() const { return _rawGyr[0]; }
+    int16_t rawGyrY() const { return _rawGyr[1]; }
+    int16_t rawGyrZ() const { return _rawGyr[2]; }
+
+    /**
+     * @brief      Get raw temperature of gyro die
+     *
+     * @return     Temperature in bytes
+     */
+    int16_t rawTemp() const { return _rawT; }
+
+
+
 
     int calibrateGyro();
     float getGyroBiasX();
@@ -187,8 +210,6 @@ class ICM42688
     static constexpr uint32_t I2C_CLK = 400000; // 400 kHz
     size_t _numBytes = 0; // number of bytes received from I2C
 
-    int16_t _rawMeas[7]; // temp, accel xyz, gyro xyz
-
     ///\brief SPI Communication
     SPIClass *_spi = {};
     uint8_t _csPin = 0;
@@ -204,6 +225,10 @@ class ICM42688
     float _t = 0.0f;
     float _acc[3] = {};
     float _gyr[3] = {};
+
+    int16_t _rawT = 0;
+    int16_t _rawAcc[3]={};
+    int16_t _rawGyr[3]={};
 
     ///\brief Full scale resolution factors
     float _accelScale = 0.0f;
