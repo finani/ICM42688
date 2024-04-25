@@ -223,22 +223,50 @@ int ICM42688::getAGT() {
   if (readRegisters(UB0_REG_TEMP_DATA1, 14, _buffer) < 0) return -1;
 
   // combine bytes into 16 bit values
+  int16_t rawMeas[7]; // temp, accel xyz, gyro xyz
   for (size_t i=0; i<7; i++) {
-    _rawMeas[i] = ((int16_t)_buffer[i*2] << 8) | _buffer[i*2+1];
+    rawMeas[i] = ((int16_t)_buffer[i*2] << 8) | _buffer[i*2+1];
   }
 
-  _t = (static_cast<float>(_rawMeas[0]) / TEMP_DATA_REG_SCALE) + TEMP_OFFSET;
+  _t = (static_cast<float>(rawMeas[0]) / TEMP_DATA_REG_SCALE) + TEMP_OFFSET;
 
-  _acc[0] = ((_rawMeas[1] * _accelScale) - _accB[0]) * _accS[0];
-  _acc[1] = ((_rawMeas[2] * _accelScale) - _accB[1]) * _accS[1];
-  _acc[2] = ((_rawMeas[3] * _accelScale) - _accB[2]) * _accS[2];
+  _acc[0] = ((rawMeas[1] * _accelScale) - _accB[0]) * _accS[0];
+  _acc[1] = ((rawMeas[2] * _accelScale) - _accB[1]) * _accS[1];
+  _acc[2] = ((rawMeas[3] * _accelScale) - _accB[2]) * _accS[2];
 
-  _gyr[0] = (_rawMeas[4] * _gyroScale) - _gyrB[0];
-  _gyr[1] = (_rawMeas[5] * _gyroScale) - _gyrB[1];
-  _gyr[2] = (_rawMeas[6] * _gyroScale) - _gyrB[2];
+  _gyr[0] = (rawMeas[4] * _gyroScale) - _gyrB[0];
+  _gyr[1] = (rawMeas[5] * _gyroScale) - _gyrB[1];
+  _gyr[2] = (rawMeas[6] * _gyroScale) - _gyrB[2];
 
   return 1;
 }
+
+
+int ICM42688::getRawAGT() {
+  _useSPIHS = true; // use the high speed SPI for data readout
+  // grab the data from the ICM42688
+  if (readRegisters(UB0_REG_TEMP_DATA1, 14, _buffer) < 0) return -1;
+
+  // combine bytes into 16 bit values
+  int16_t rawMeas[7]; // temp, accel xyz, gyro xyz
+  for (size_t i=0; i<7; i++) {
+    rawMeas[i] = ((int16_t)_buffer[i*2] << 8) | _buffer[i*2+1];
+  }
+
+  _rawT = rawMeas[0];
+  _rawAcc[0] = rawMeas[1] ;
+  _rawAcc[1] = rawMeas[2] ;
+  _rawAcc[2] = rawMeas[3] ;
+  _rawGyr[0] = rawMeas[4] ;
+  _rawGyr[1] = rawMeas[5] ;
+  _rawGyr[2] = rawMeas[6] ;
+
+  return 1;
+}
+
+
+
+
 
 /* configures and enables the FIFO buffer  */
 int ICM42688_FIFO::enableFifo(bool accel,bool gyro,bool temp) {
@@ -503,43 +531,6 @@ void ICM42688::setAccelCalZ(float bias,float scaleFactor) {
   _accB[2] = bias;
   _accS[2] = scaleFactor;
 }
-
-/* returns the accelerometer measurement in the x direction, raw 16-bit integer */
-int16_t ICM42688::getAccelX_count()
-{
-    return _rawMeas[1];
-}
-
-/* returns the accelerometer measurement in the y direction, raw 16-bit integer */
-int16_t ICM42688::getAccelY_count()
-{
-    return _rawMeas[2];
-}
-
-/* returns the accelerometer measurement in the z direction, raw 16-bit integer */
-int16_t ICM42688::getAccelZ_count()
-{
-    return _rawMeas[3];
-}
-
-/* returns the gyroscople measurement in the x direction, raw 16-bit integer */
-int16_t ICM42688::getGyroX_count()
-{
-    return _rawMeas[4];
-}
-
-/* returns the gyroscople measurement in the y direction, raw 16-bit integer */
-int16_t ICM42688::getGyroY_count()
-{
-    return _rawMeas[5];
-}
-
-/* returns the gyroscople measurement in the z direction, raw 16-bit integer */
-int16_t ICM42688::getGyroZ_count()
-{
-    return _rawMeas[6];
-}
-
 
 /* writes a byte to ICM42688 register given a register address and data */
 int ICM42688::writeRegister(uint8_t subAddress, uint8_t data) {
