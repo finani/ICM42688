@@ -624,12 +624,28 @@ uint8_t ICM42688::whoAmI() {
 
 /* get Raw Bias (Offsets)*/
 int getRawBias(){
-  _rawBia
+  _rawBias[0] = 0; 
+  _rawBias[1] = 0;
+  _rawBias[2] = 0;
+  _rawBias[3] = 0;
+  _rawBias[4] = 0;
+  _rawBias[5] = 0;
+
+  
+  for (size_t i=0; i < NUM_CALIB_SAMPLES; i++) {
+    getRawAGT();
+    _rawAccBias[0] += _rawAcc[0]
+    _rawAccBias[1] += _rawAcc[1]
+    _rawAccBias[2] += _rawAcc[2]
+    _rawGyrBias[0] += _rawGyr[0]
+    _rawGyrBias[1] += _rawGyr[1]
+    _rawGyrBias[2] += _rawGyr[2]
+    delay(50);
+  }
+  ///#TODO - do the average and cast to int32
+  return 1;
 }
 
-
-
-/* getrawGyroBias*/
 
 
 
