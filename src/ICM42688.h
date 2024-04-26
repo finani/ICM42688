@@ -183,6 +183,11 @@ class ICM42688
      */
     int16_t rawTemp() const { return _rawT; }
 
+    
+    int getRawBias();
+    int setGyrOffset();
+    int setAccOffset();
+    int selfTest();
 
 
 
@@ -229,6 +234,12 @@ class ICM42688
     int16_t _rawT = 0;
     int16_t _rawAcc[3]={};
     int16_t _rawGyr[3]={};
+
+
+    ///\brief Raw Gyro and Accelero Bias
+    int32_t _rawAccBias[3]={0,0,0};
+    int32_t _rawGyrBias[3] = {0,0,0};
+
 
     ///\brief Full scale resolution factors
     float _accelScale = 0.0f;
@@ -294,6 +305,10 @@ class ICM42688
      * @return     Value of WHO_AM_I register
      */
     uint8_t whoAmI();
+
+
+
+    void selfTest(int16_t * accelDiff, int16_t * gyroDiff, float * ratio);
 };
 
 class ICM42688_FIFO: public ICM42688 {
