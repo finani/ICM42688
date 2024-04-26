@@ -651,14 +651,14 @@ int getRawBias(){
 
 
 /* Set Gyro Offsets*/
-int setGyrOffset(){}
+int setGyrOffset(){return 1}
 
 /* Set Accel Offsets*/
-int setAccOffset(){}
+int setAccOffset(){return 1}
 
 
 /* Selftest*/
- int selfTest(){}
+ int selfTest(){return 1}
 
 
 
