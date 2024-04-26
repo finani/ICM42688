@@ -218,25 +218,29 @@ int ICM42688::disableDataReadyInterrupt() {
 
 /* reads the most current data from ICM42688 and stores in buffer */
 int ICM42688::getAGT() {
-  _useSPIHS = true; // use the high speed SPI for data readout
-  // grab the data from the ICM42688
-  if (readRegisters(UB0_REG_TEMP_DATA1, 14, _buffer) < 0) return -1;
+  getRawAGT();
+
+
+
+  // _useSPIHS = true; // use the high speed SPI for data readout
+  // // grab the data from the ICM42688
+  // if (readRegisters(UB0_REG_TEMP_DATA1, 14, _buffer) < 0) return -1;
 
   // combine bytes into 16 bit values
-  int16_t rawMeas[7]; // temp, accel xyz, gyro xyz
-  for (size_t i=0; i<7; i++) {
-    rawMeas[i] = ((int16_t)_buffer[i*2] << 8) | _buffer[i*2+1];
-  }
+  // int16_t rawMeas[7]; // temp, accel xyz, gyro xyz
+  // for (size_t i=0; i<7; i++) {
+  //   rawMeas[i] = ((int16_t)_buffer[i*2] << 8) | _buffer[i*2+1];
+  // }
 
-  _t = (static_cast<float>(rawMeas[0]) / TEMP_DATA_REG_SCALE) + TEMP_OFFSET;
+  _t = (static_cast<float>(_rawMeas[0]) / TEMP_DATA_REG_SCALE) + TEMP_OFFSET;
 
-  _acc[0] = ((rawMeas[1] * _accelScale) - _accB[0]) * _accS[0];
-  _acc[1] = ((rawMeas[2] * _accelScale) - _accB[1]) * _accS[1];
-  _acc[2] = ((rawMeas[3] * _accelScale) - _accB[2]) * _accS[2];
+  _acc[0] = ((_rawMeas[1] * _accelScale) - _accB[0]) * _accS[0];
+  _acc[1] = ((_rawMeas[2] * _accelScale) - _accB[1]) * _accS[1];
+  _acc[2] = ((_rawMeas[3] * _accelScale) - _accB[2]) * _accS[2];
 
-  _gyr[0] = (rawMeas[4] * _gyroScale) - _gyrB[0];
-  _gyr[1] = (rawMeas[5] * _gyroScale) - _gyrB[1];
-  _gyr[2] = (rawMeas[6] * _gyroScale) - _gyrB[2];
+  _gyr[0] = (_rawMeas[4] * _gyroScale) - _gyrB[0];
+  _gyr[1] = (_rawMeas[5] * _gyroScale) - _gyrB[1];
+  _gyr[2] = (_rawMeas[6] * _gyroScale) - _gyrB[2];
 
   return 1;
 }
@@ -627,3 +631,36 @@ uint8_t ICM42688::whoAmI() {
   // return the register value
   return _buffer[0];
 }
+
+
+
+/* 
+
+
+
+
+
+//#DONE
+/*
+raw data reading
+*/
+
+//#TODO
+/*
+DRStatus
+Seld test
+Offset Bias
+
+WakeOnMotion
+ApexStatus   => INT_STATUS2 and INT_STATUS3
+8.1 APEX ODR SUPPORT
+8.2 DMP POWER SAVE MODE
+8.3 PEDOMETER PROGRAMMING
+8.4 TILT DETECTION PROGRAMMING
+8.5 RAISE TO WAKE/SLEEP PROGRAMMING
+8.6 TAP DETECTION PROGRAMMING
+8.7 WAKE ON MOTION PROGRAMMING
+8.8 SIGNIFICANT MOTION DETECTION PROGRAMMING  p47
+
+
+*/
