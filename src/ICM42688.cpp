@@ -218,19 +218,7 @@ int ICM42688::disableDataReadyInterrupt() {
 
 /* reads the most current data from ICM42688 and stores in buffer */
 int ICM42688::getAGT() {
-  getRawAGT();
-
-
-
-  // _useSPIHS = true; // use the high speed SPI for data readout
-  // // grab the data from the ICM42688
-  // if (readRegisters(UB0_REG_TEMP_DATA1, 14, _buffer) < 0) return -1;
-
-  // combine bytes into 16 bit values
-  // int16_t rawMeas[7]; // temp, accel xyz, gyro xyz
-  // for (size_t i=0; i<7; i++) {
-  //   rawMeas[i] = ((int16_t)_buffer[i*2] << 8) | _buffer[i*2+1];
-  // }
+  if(getRawAGT()<0) return -1;
 
   _t = (static_cast<float>(_rawT) / TEMP_DATA_REG_SCALE) + TEMP_OFFSET;
 
@@ -634,9 +622,27 @@ uint8_t ICM42688::whoAmI() {
 
 
 
-/* 
+/* get Raw Bias (Offsets)*/
+int getRawBias(){
+  _rawBia
+}
 
 
+
+/* getrawGyroBias*/
+
+
+
+
+/* Set Gyro Offsets*/
+int setGyrOffset(){}
+
+/* Set Accel Offsets*/
+int setAccOffset(){}
+
+
+/* Selftest*/
+ int selfTest(){}
 
 
 
