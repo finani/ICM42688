@@ -232,15 +232,15 @@ int ICM42688::getAGT() {
   //   rawMeas[i] = ((int16_t)_buffer[i*2] << 8) | _buffer[i*2+1];
   // }
 
-  _t = (static_cast<float>(_rawMeas[0]) / TEMP_DATA_REG_SCALE) + TEMP_OFFSET;
+  _t = (static_cast<float>(_rawT) / TEMP_DATA_REG_SCALE) + TEMP_OFFSET;
 
-  _acc[0] = ((_rawMeas[1] * _accelScale) - _accB[0]) * _accS[0];
-  _acc[1] = ((_rawMeas[2] * _accelScale) - _accB[1]) * _accS[1];
-  _acc[2] = ((_rawMeas[3] * _accelScale) - _accB[2]) * _accS[2];
+  _acc[0] = ((_rawAcc[0] * _accelScale) - _accB[0]) * _accS[0];
+  _acc[1] = ((_rawAcc[1] * _accelScale) - _accB[1]) * _accS[1];
+  _acc[2] = ((_rawAcc[2] * _accelScale) - _accB[2]) * _accS[2];
 
-  _gyr[0] = (_rawMeas[4] * _gyroScale) - _gyrB[0];
-  _gyr[1] = (_rawMeas[5] * _gyroScale) - _gyrB[1];
-  _gyr[2] = (_rawMeas[6] * _gyroScale) - _gyrB[2];
+  _gyr[0] = (_rawGyr[0] * _gyroScale) - _gyrB[0];
+  _gyr[1] = (_rawGyr[1] * _gyroScale) - _gyrB[1];
+  _gyr[2] = (_rawGyr[2] * _gyroScale) - _gyrB[2];
 
   return 1;
 }
