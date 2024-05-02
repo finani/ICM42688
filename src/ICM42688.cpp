@@ -58,10 +58,10 @@ int ICM42688::begin() {
   ret = setGyroFS(dps2000);
   if (ret < 0) return ret;
 
-  // // disable inner filters (Notch filter, Anti-alias filter, UI filter block)
-  // if (setFilters(false, false) < 0) {
-  //   return -7;
-  // }
+  // disable inner filters (Notch filter, Anti-alias filter, UI filter block)
+  if (setFilters(false, false) < 0) {
+    return -7;
+  }
 
   // estimate gyro bias
   if (calibrateGyro() < 0) {
@@ -92,6 +92,18 @@ int ICM42688::setAccelFS(AccelFS fssel) {
 
   return 1;
 }
+
+/* get the accelerometer full scale range return the ACCELL_FS_SEL value*/
+int ICM42688::getAccelFS() {
+  // use low speed SPI for register setting
+  _useSPIHS = false;
+  setBank(0);
+  // read current register value
+  uint8_t reg;
+  if (readRegisters(UB0_REG_ACCEL_CONFIG0, 1, &reg) < 0) return -1;
+  return ((reg & 0xE0)>>5);
+}
+
 
 /* sets the gyro full scale range to values other than default */
 int ICM42688::setGyroFS(GyroFS fssel) {
@@ -217,7 +229,7 @@ int ICM42688::disableDataReadyInterrupt() {
 }
 
 /* reads the most current data from ICM42688 and stores in buffer */
-int ICM42688::getAGT() {
+int ICM42688::getAGT() { //modified to use getEawAGT()
   if(getRawAGT()<0) return -1;
 
   _t = (static_cast<float>(_rawT) / TEMP_DATA_REG_SCALE) + TEMP_OFFSET;
@@ -233,8 +245,8 @@ int ICM42688::getAGT() {
   return 1;
 }
 
-
-int ICM42688::getRawAGT() {
+/* reads the most current data from ICM42688 and stores in buffer */
+int ICM42688::getRawAGT() { //Added to return raw data only
   _useSPIHS = true; // use the high speed SPI for data readout
   // grab the data from the ICM42688
   if (readRegisters(UB0_REG_TEMP_DATA1, 14, _buffer) < 0) return -1;
@@ -255,9 +267,6 @@ int ICM42688::getRawAGT() {
 
   return 1;
 }
-
-
-
 
 
 /* configures and enables the FIFO buffer  */
@@ -620,60 +629,338 @@ uint8_t ICM42688::whoAmI() {
   return _buffer[0];
 }
 
+/* get Raw Bias (Offsets)*/ //Added to use Offsets rather than compensating through additional code
+int ICM42688::computeOffsets(){
+  const AccelFS current_Accelfssel = _accelFS;
+  const GyroFS  current_Gyrofssel  = _gyroFS;
 
+  // set the IMU at the correct resolution
+  setAccelFS(ICM42688::AccelFS::gpm2);
+  setGyroFS(ICM42688::GyroFS::dps250);                      //check if this is the right one
+  int16_t FullScale_Acc = 2;
+  int16_t FullScale_Gyr = 250;
 
-/* get Raw Bias (Offsets)*/
-int getRawBias(){
-  _rawBias[0] = 0; 
-  _rawBias[1] = 0;
-  _rawBias[2] = 0;
-  _rawBias[3] = 0;
-  _rawBias[4] = 0;
-  _rawBias[5] = 0;
-
-  
+  // reset the Offset_user
+  setBank(4);                                           
+  if (writeRegister(UB4_REG_OFFSET_USER5, 0) < 0) return -2;// lower Ax byte                                       
+  if (writeRegister(UB4_REG_OFFSET_USER6, 0) < 0) return -2; // lower Ay byte                                                      
+  if (writeRegister(UB4_REG_OFFSET_USER8, 0) < 0) return -2;// lower Az byte                                                   
+  if (writeRegister(UB4_REG_OFFSET_USER2, 0) < 0) return -2;// lower Gy byte                                     
+  if (writeRegister(UB4_REG_OFFSET_USER3, 0) < 0) return -2;// lower Gz byte                                          
+  if (writeRegister(UB4_REG_OFFSET_USER0, 0) < 0) return -2;// lower Gx byte 
+  if (writeRegister(UB4_REG_OFFSET_USER4, 0) < 0) return -2;// upper Ax and Gz bytes 
+  if (writeRegister(UB4_REG_OFFSET_USER7, 0) < 0) return -2;// upper Az and Ay bytes                      
+  if (writeRegister(UB4_REG_OFFSET_USER1, 0) < 0) return -2;// upper Gy and Gx bytes
+  setBank(0);
+  // reinitialise the _rawAccBias and _rawGyrBias
+  for(size_t ii = 1; ii< 3; ii++){
+    _rawAccBias[ii] = 0; 
+    _rawGyrBias[ii] = 0;
+  }
+  // record raw values and add samples
   for (size_t i=0; i < NUM_CALIB_SAMPLES; i++) {
     getRawAGT();
-    _rawAccBias[0] += _rawAcc[0]
-    _rawAccBias[1] += _rawAcc[1]
-    _rawAccBias[2] += _rawAcc[2]
-    _rawGyrBias[0] += _rawGyr[0]
-    _rawGyrBias[1] += _rawGyr[1]
-    _rawGyrBias[2] += _rawGyr[2]
-    delay(50);
+    _rawAccBias[0] += _rawAcc[0];
+    _rawAccBias[1] += _rawAcc[1];
+    _rawAccBias[2] += _rawAcc[2];
+    _rawGyrBias[0] += _rawGyr[0];
+    _rawGyrBias[1] += _rawGyr[1];
+    _rawGyrBias[2] += _rawGyr[2];
+    delay(1); 
   }
-  ///#TODO - do the average and cast to int32
+
+  // Average
+  _rawAccBias[0] = (int32_t)((double)_rawAccBias[0]/(double)NUM_CALIB_SAMPLES);
+  _rawAccBias[1] = (int32_t)((double)_rawAccBias[1]/(double)NUM_CALIB_SAMPLES);
+  _rawAccBias[2] = (int32_t)((double)_rawAccBias[2]/(double)NUM_CALIB_SAMPLES);
+  _rawGyrBias[0] = (int32_t)((double)_rawGyrBias[0]/(double)NUM_CALIB_SAMPLES);
+  _rawGyrBias[1] = (int32_t)((double)_rawGyrBias[1]/(double)NUM_CALIB_SAMPLES);
+  _rawGyrBias[2] = (int32_t)((double)_rawGyrBias[2]/(double)NUM_CALIB_SAMPLES);
+  
+  //compensate gravity and compute the _AccOffset and _GyrOffset
+  for(size_t ii = 0; ii< 3; ii++){
+    _AccOffset[ii] = (int16_t) (-(_rawAccBias[ii]) * (FullScale_Acc/32768.0f*2048));//*2048));  // 0.5 mg resolution
+    if(_rawAccBias[ii]*FullScale_Acc > 26000) {_AccOffset[ii] = (int16_t) (-(_rawAccBias[ii] - 32768/FullScale_Acc) * (FullScale_Acc/32768.0f*2048));}//26000 ~80% of 32768
+    if(_rawAccBias[ii]*FullScale_Acc < -26000){_AccOffset[ii] = (int16_t) (-(_rawAccBias[ii] + 32768/FullScale_Acc) * (FullScale_Acc/32768.0f*2048));}
+    _GyrOffset[ii] =   (int16_t) ((-_rawGyrBias[ii]) * (FullScale_Gyr/32768.0f*32));  //1/32 dps resolution
+  }
+
+
+  // Serial.println("The new raw Bias are:");
+  // for(size_t ii = 0; ii< 3; ii++){
+  //   Serial.print(_rawAccBias[ii]);Serial.print("\t");
+  // }
+  //  for(size_t ii = 0; ii< 3; ii++){
+  //   Serial.print(_rawGyrBias[ii]);Serial.print("\t");
+  // }
+  // Serial.println("");
+
+  // Serial.println("The new Offsets are:");
+  // for(size_t ii = 0; ii< 3; ii++){
+  //   Serial.print(_AccOffset[ii]);Serial.print("\t");
+  // }
+  //  for(size_t ii = 0; ii< 3; ii++){
+  //   Serial.print(_GyrOffset[ii]);Serial.print("\t");
+  // }
+  // Serial.println("");
+
+
+  if (setAccelFS(current_Accelfssel) < 0) return -4;
+  if (setGyroFS(current_Gyrofssel) < 0) return -4;
   return 1;
+}
+
+int ICM42688::setAllOffsets(){
+  setBank(4);
+  uint8_t reg; 
+
+  // clear all offsets:
+  if (writeRegister(UB4_REG_OFFSET_USER0, 0) < 0) return -2;
+  if (writeRegister(UB4_REG_OFFSET_USER1, 0) < 0) return -2;
+  if (writeRegister(UB4_REG_OFFSET_USER2, 0) < 0) return -2;
+  if (writeRegister(UB4_REG_OFFSET_USER3, 0) < 0) return -2;
+  if (writeRegister(UB4_REG_OFFSET_USER4, 0) < 0) return -2;
+  if (writeRegister(UB4_REG_OFFSET_USER5, 0) < 0) return -2;
+  if (writeRegister(UB4_REG_OFFSET_USER6, 0) < 0) return -2;
+  if (writeRegister(UB4_REG_OFFSET_USER7, 0) < 0) return -2;
+  
+  reg = _AccOffset[0] & 0x00FF;                                         // lower Ax byte
+  if (writeRegister(UB4_REG_OFFSET_USER5, reg) < 0) return -2;
+  reg = _AccOffset[1] & 0x00FF;                                            // lower Ay byte
+  if (writeRegister(UB4_REG_OFFSET_USER6, reg) < 0) return -2;              
+  reg = _AccOffset[2] & 0x00FF;                                            // lower Az byte
+  if (writeRegister(UB4_REG_OFFSET_USER8, reg) < 0) return -2;         
+
+  reg = _GyrOffset[1] & 0x00FF;                                            // lower Gy byte
+  if (writeRegister(UB4_REG_OFFSET_USER2, reg) < 0) return -2;
+  reg = _GyrOffset[2] & 0x00FF;                                            // lower Gz byte
+  if (writeRegister(UB4_REG_OFFSET_USER3, reg) < 0) return -2;
+  reg = _GyrOffset[0] & 0x00FF;                                            // lower Gx byte
+  if (writeRegister(UB4_REG_OFFSET_USER0, reg) < 0) return -2;
+
+  reg = (_AccOffset[0] & 0x0F00) >> 4 | (_GyrOffset[2] & 0x0F00) >> 8;    // upper Ax and Gz bytes
+  if (writeRegister(UB4_REG_OFFSET_USER4, reg) < 0) return -2;
+  reg = (_AccOffset[2] & 0x0F00) >> 4 | (_AccOffset[1] & 0x0F00) >> 8;                        // upper Az and Ay bytes
+  if (writeRegister(UB4_REG_OFFSET_USER7, reg) < 0) return -2;
+  reg = (_GyrOffset[1] & 0x0F00) >> 4 | (_GyrOffset[0] & 0x0F00) >> 8;                             // upper Gy and Gx bytes
+  if (writeRegister(UB4_REG_OFFSET_USER1, reg) < 0) return -2;
+  setBank(0);
+  return 1;
+}
+
+/* Set Gyro and Accel Offsets individually*/
+int ICM42688::setAccXOffset(int16_t accXoffset){
+  setBank(4);   
+  uint8_t reg1 = (accXoffset & 0x00FF);
+  uint8_t reg2;
+  if (readRegisters(UB4_REG_OFFSET_USER4, 1, &reg2) < 0) return -1;
+  reg2 = (reg2 & 0x0F) | ((accXoffset & 0x0F00)>>4); 
+  if (writeRegister(UB4_REG_OFFSET_USER5, reg1) < 0) return -2;
+  if (writeRegister(UB4_REG_OFFSET_USER4, reg2) < 0) return -2; 
+  setBank(0);
+  return 1;
+}
+
+int ICM42688::setAccYOffset(int16_t accYoffset){
+  setBank(4);
+  uint8_t reg1 = ( accYoffset & 0x00FF);
+  uint8_t reg2;
+  if (readRegisters(UB4_REG_OFFSET_USER7, 1, &reg2) < 0) return -1;
+  reg2 = (reg2 & 0xF0) | (( accYoffset & 0x0F00)>>8);
+  if (writeRegister(UB4_REG_OFFSET_USER6, reg1) < 0) return -2;
+  if (writeRegister(UB4_REG_OFFSET_USER7, reg2) < 0) return -2;
+  setBank(0);
+  return 1;
+  }
+
+int ICM42688::setAccZOffset(int16_t accZoffset){
+  setBank(4);   
+  uint8_t reg1 = accZoffset & 0x00FF; 
+  uint8_t reg2;
+  if (readRegisters(UB4_REG_OFFSET_USER7, 1, &reg2) < 0) return -1;
+  reg2 = (reg2 & 0x0F) | ((accZoffset & 0x0F00)>>4);
+  if (writeRegister(UB4_REG_OFFSET_USER8, reg1) < 0) return -2;
+  if (writeRegister(UB4_REG_OFFSET_USER7, reg2) < 0) return -2;
+  setBank(0);
+  return 1;
+}
+
+int ICM42688::setGyrXOffset(int16_t gyrXoffset){
+  setBank(4);   
+  uint8_t reg1 = gyrXoffset & 0x00FF;
+  uint8_t reg2;
+  if (readRegisters(UB4_REG_OFFSET_USER1, 1, &reg2) < 0) return -1;
+  reg2 = (reg2 & 0xF0) | ((gyrXoffset & 0x0F00)>>8);
+  if (writeRegister(UB4_REG_OFFSET_USER0, reg1) < 0) return -2;
+  if (writeRegister(UB4_REG_OFFSET_USER1, reg2) < 0) return -2;
+  setBank(0);
+  return 1;
+}
+
+int ICM42688::setGyrYOffset(int16_t gyrYoffset){
+  setBank(4);   
+  uint8_t reg1 = gyrYoffset & 0x00FF;
+  uint8_t reg2;
+  if (readRegisters(UB4_REG_OFFSET_USER1, 1, &reg2) < 0) return -1;
+  reg2 = (reg2 & 0x0F) | ((gyrYoffset & 0x0F00)>>4);
+  reg2 = (gyrYoffset & 0x0F00) >> 4 | (reg2 & 0x0F00) >> 4;                          
+  if (writeRegister(UB4_REG_OFFSET_USER2, reg1) < 0) return -2;
+  if (writeRegister(UB4_REG_OFFSET_USER1, reg2) < 0) return -2;
+  setBank(0);
+  return 1;
+}
+
+int ICM42688::setGyrZOffset(int16_t gyrZoffset){
+  setBank(4);   
+  uint8_t reg1 = gyrZoffset & 0x00FF;
+  uint8_t reg2;
+  if (readRegisters(UB4_REG_OFFSET_USER4, 1, &reg2) < 0) return -1;
+  reg2 = (reg2 & 0xF0) | ((gyrZoffset & 0x0F00)>>8);
+  if (writeRegister(UB4_REG_OFFSET_USER3, reg1) < 0) return -2;
+  if (writeRegister(UB4_REG_OFFSET_USER4, reg2) < 0) return -2;
+  setBank(0);
+  return 1;
+}
+
+
+int ICM42688::setUIFilterBlock(UIFiltOrd gyroUIFiltOrder,UIFiltOrd accelUIFiltOrder){
+  return 1;
+}
+
+
+int ICM42688::setGyroNotchFilter(float gyroNFfreq_x,float gyroNFfreq_y,float gyroNFfreq_z,GyroNFBWsel gyro_nf_bw){
+    setBank(3);
+    // get clock div
+    uint8_t reg;
+    if (readRegisters(UB0_REG_GYRO_CONFIG0, 1, &reg) < 0) return -1;
+    uint8_t clkdiv = reg & 0x3F;
+    setBank(1);
+    uint16_t nf_coswz;
+    //uint8_t nf_coswz_sel = 0;
+    uint8_t gyro_nf_coswz_low[3] = {0}; 
+    uint8_t buff = 0;
+    float Fdrv = 19200 /(clkdiv*10.0f); // in kHz  (19.2MHz = 19200 kHz)
+    float fdesired[3] = {gyroNFfreq_x,gyroNFfreq_y,gyroNFfreq_z};  // in kHz - fesdeired between 1kz and 3 kHz
+    float coswz = 0;
+    for(size_t ii=0;ii<3;ii++){
+      float coswz = cos(2*PI*fdesired[ii]/Fdrv);
+      if(coswz <=0.875){
+            nf_coswz = (uint16_t) round(coswz*256);
+            gyro_nf_coswz_low[ii] = (uint8_t) (nf_coswz & 0x00FF);  //take lower part
+            buff = buff & (((nf_coswz & 0xFF00)>>8)<<ii);       //take upper part and concatenate in the buffer
+          }
+          else{
+            buff =  buff & (1<<(3+ii));//nf_coswz_sel =  nf_coswz_sel & (1<<(3+ii));
+            if(coswz>0.875){
+              nf_coswz = (uint16_t) round(8*(1-coswz)*256);
+              gyro_nf_coswz_low[ii] = (uint8_t) (nf_coswz & 0x00FF);  //take lower part
+              buff = buff & (((nf_coswz & 0xFF00)>>8)<<ii);       //take upper part and concatenate in the buffer
+              }
+            else if(coswz<-0.875){
+              nf_coswz = (uint16_t) round(-8*(1-coswz)*256);
+              gyro_nf_coswz_low[ii] = (uint8_t) (nf_coswz & 0x00FF);  //take lower part
+              buff = buff & (((nf_coswz & 0xFF00)>>8)<<ii);       //take upper part and concatenate in the buffer}
+              }
+          }
+    }
+    // write to the Registers 
+    if (writeRegister(UB1_REG_GYRO_CONFIG_STATIC6, gyro_nf_coswz_low[0]) < 0) return -2;
+    if (writeRegister(UB1_REG_GYRO_CONFIG_STATIC7, gyro_nf_coswz_low[1]) < 0) return -2;
+    if (writeRegister(UB1_REG_GYRO_CONFIG_STATIC8, gyro_nf_coswz_low[2]) < 0) return -2;
+    if (writeRegister(UB1_REG_GYRO_CONFIG_STATIC9, buff < 0)) return -2;
+    if (writeRegister(UB1_REG_GYRO_CONFIG_STATIC10, gyro_nf_bw < 0)) return -2;
+    //Set Bank 0 to allow data measurements
+    setBank(0);
+    return 1;
+}   
+
+
+/* for testing only*/
+int ICM42688::testingFunction(){
+  return 1;
+}
+
+/* Get Resolution FullScale */
+float ICM42688::getAccelRes(){ // read  ACCEL_CONFIG0 and get ACCEL_FS_SEL value
+  int currentAccFS = getAccelFS();
+  float accRes;
+  switch(currentAccFS){
+    case ICM42688::AccelFS::gpm2:
+      accRes = 16.0f/(32768.0f);
+      break;
+    case ICM42688::AccelFS::gpm4:
+      accRes = 4.0f/(32768.0f);
+    break;
+    case ICM42688::AccelFS::gpm8:
+      accRes = 8.0f/(32768.0f);
+      break;
+    case ICM42688::AccelFS::gpm16:
+      accRes = 16.0f/(32768.0f);
+      break;
+  }
+  return accRes;
+}
+/* Get Resolution FullScale */
+float ICM42688::getGyroRes(){
+  int currentGyroFS = getGyroFS();
+  float gyroRes;
+  switch(currentGyroFS){
+    case ICM42688::GyroFS::dps2000:
+      gyroRes = 2000.0f/32768.0f;
+      break;
+    case ICM42688::GyroFS::dps1000:
+      gyroRes = 1000.0f/32768.0f;
+      break;
+    case ICM42688::GyroFS::dps500:
+      gyroRes = 500.0f/32768.0f;
+      break;
+    case ICM42688::GyroFS::dps250:
+      gyroRes = 250.0f/32768.0f;
+      break;  
+    case ICM42688::GyroFS::dps125:
+      gyroRes = 125.0f/32768.0f;
+      break;
+    case ICM42688::GyroFS::dps62_5:
+      gyroRes = 62.5f/32768.0f;
+      break;
+    case ICM42688::GyroFS::dps31_25:
+      gyroRes = 31.25f/32768.0f;
+      break;
+    case ICM42688::GyroFS::dps15_625:
+      gyroRes = 15.625f/32768.0f;
+      break;
+  }
+  return gyroRes;
 }
 
 
 
 
 
-/* Set Gyro Offsets*/
-int setGyrOffset(){return 1}
-
-/* Set Accel Offsets*/
-int setAccOffset(){return 1}
-
-
 /* Selftest*/
- int selfTest(){return 1}
+ int ICM42688::selfTest(){return 1;}
 
 
 
-//#DONE
-/*
-raw data reading
-*/
 
-//#TODO
-/*
-DRStatus
-Seld test
-Offset Bias
 
-WakeOnMotion
+
+/*//#TODO
+//High priority
+raw data reading         <-- Validated 
+Offset Bias compute      <-- Validated
+Offset Bias set          <-- Validated
+get Full scale resoluton <-- To be tested
+Notch Filter             <-- To be tested
+AAF Filter               <-- To be developed
+UI Filter Block          <-- To be developed
+Self test                <-- To be developed
+
+
+
+//Low priotity
+Read INT_STATUS          <-- get info if data are available
+
 ApexStatus   => INT_STATUS2 and INT_STATUS3
 8.1 APEX ODR SUPPORT
 8.2 DMP POWER SAVE MODE
@@ -683,6 +970,4 @@ ApexStatus   => INT_STATUS2 and INT_STATUS3
 8.6 TAP DETECTION PROGRAMMING
 8.7 WAKE ON MOTION PROGRAMMING
 8.8 SIGNIFICANT MOTION DETECTION PROGRAMMING  p47
-
-
 */
