@@ -234,7 +234,7 @@ class ICM42688
 
     uint8_t _bank = 0; ///< current user bank
 
-    const uint8_t FIFO_EN = 0x23;
+    const uint8_t FIFO_EN = 0x5F;
     const uint8_t FIFO_TEMP_EN = 0x04;
     const uint8_t FIFO_GYRO = 0x02;
     const uint8_t FIFO_ACCEL = 0x01;
