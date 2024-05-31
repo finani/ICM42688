@@ -262,6 +262,14 @@ int ICM42688_FIFO::enableFifo(bool accel,bool gyro,bool temp) {
   return 1;
 }
 
+/* Start streaming, required to read after enableFifo() under most sensor configurations */
+int ICM42688_FIFO::streamToFifo(){
+  if(writeRegister(ICM42688reg::UB0_REG_FIFO_CONFIG, 1 << 6); < 0) {
+    return -2;
+  }
+  return 1;
+}
+
 /* reads data from the ICM42688 FIFO and stores in buffer
   High-resolution mode not yet supported */
 int ICM42688_FIFO::readFifo() {

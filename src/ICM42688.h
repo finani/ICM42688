@@ -275,6 +275,7 @@ class ICM42688_FIFO: public ICM42688 {
   public:
     using ICM42688::ICM42688;
     int enableFifo(bool accel,bool gyro,bool temp);
+    int streamToFifo();
     int readFifo();
     void getFifoAccelX_mss(size_t *size,float* data);
     void getFifoAccelY_mss(size_t *size,float* data);
