@@ -288,6 +288,8 @@ class ICM42688_FIFO: public ICM42688 {
     bool _enFifoAccel = false;
     bool _enFifoGyro = false;
     bool _enFifoTemp = false;
+    bool _enFifoTimestamp = false;
+    bool _enFifoHeader = false;
     size_t _fifoSize = 0;
     size_t _fifoFrameSize = 0;
     float _axFifo[85] = {};

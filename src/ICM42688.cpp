@@ -240,17 +240,25 @@ int ICM42688::getAGT() {
   return 1;
 }
 
-/* configures and enables the FIFO buffer  */
+/* configures and enables the FIFO buffer
+  Enforces best-fitting structure (1, 2, or 3) but cannot replicate Packet 4 as choosing between 3/4 requires
+  additional argument for high-resolution
+
+  See https://invensense.tdk.com/wp-content/uploads/2020/04/ds-000347_icm-42688-p-datasheet.pdf, 6.1 for details
+*/
 int ICM42688_FIFO::enableFifo(bool accel,bool gyro,bool temp) {
-  // use low speed SPI for register setting
-  _useSPIHS = false;
-  if(writeRegister(FIFO_EN,(accel*FIFO_ACCEL)|(gyro*FIFO_GYRO)|(temp*FIFO_TEMP_EN)) < 0) {
-    return -2;
-  }
   _enFifoAccel = accel;
   _enFifoGyro = gyro;
-  _enFifoTemp = temp;
-  _fifoFrameSize = accel*6 + gyro*6 + temp*2; 
+  _enFifoTemp = true; // all structures have 1-byte temp, didn't return error to maintain backwards compatibility
+  _enFifoTimestamp = accel && gyro; // can only read both accel and gyro in Structure 3 or 4, both have 2-byte timestamp
+  _enFifoHeader = accel || gyro; // if neither sensor requested, FIFO will not send any more packets
+  _fifoFrameSize = _enFifoHeader * 1 + _enFifoAccel*6 + _enFifoGyro*6 + _enFifoTemp + _enFifoTimestamp * 2;
+
+  // use low speed SPI for register setting
+  _useSPIHS = false;
+  if(writeRegister(FIFO_EN,(_enFifoAccel*FIFO_ACCEL)|(_enFifoGyro*FIFO_GYRO)|(_enFifoTemp*FIFO_TEMP_EN)) < 0) {
+    return -2;
+  }
   return 1;
 }
 
