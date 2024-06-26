@@ -19,13 +19,13 @@ void setup() {
   }
 
   // setting the accelerometer full scale range to +/-8G
-  imu.setAccelFS(ICM42688::gpm8);
+  IMU.setAccelFS(ICM42688::gpm8);
   // setting the gyroscope full scale range to +/-500 deg/s
-  imu.setGyroFS(ICM42688::dps500);
+  IMU.setGyroFS(ICM42688::dps500);
   
   // set output data rate to 12.5 Hz
-  imu.setAccelODR(ICM42688::odr12_5);
-  imu.setGyroODR(ICM42688::odr12_5);
+  IMU.setAccelODR(ICM42688::odr12_5);
+  IMU.setGyroODR(ICM42688::odr12_5);
 
   Serial.println("ax,ay,az,gx,gy,gz,temp_C");
 }
