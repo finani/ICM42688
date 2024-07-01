@@ -45,6 +45,23 @@ class ICM42688
       odr500 = 0x0F,
     };
 
+    enum GyroNFBWsel : uint8_t{
+        nfBW1449Hz = 0x00,
+        nfBW680z = 0x01,
+        nfBW329Hz = 0x02,
+        nfBW162Hz = 0x03,
+        nfBW80Hz = 0x04,
+        nfBW40Hz = 0x05,
+        nfBW20Hz = 0x06,
+        nfBW10Hz = 0x07,
+    };
+
+    enum UIFiltOrd : uint8_t{  
+      first_order  = 0x00,
+      second_order = 0x01,
+      third_order  = 0x02,
+    };
+
     /**
      * @brief      Constructor for I2C communication
      *
@@ -76,7 +93,7 @@ class ICM42688
      * @return     ret < 0 if error
      */
     int setAccelFS(AccelFS fssel);
-
+    int getAccelFS();
     /**
      * @brief      Sets the full scale range for the gyro
      *
@@ -85,7 +102,7 @@ class ICM42688
      * @return     ret < 0 if error
      */
     int setGyroFS(GyroFS fssel);
-
+    int getGyroFS();
     /**
      * @brief      Set the ODR for accelerometer
      *
@@ -94,6 +111,7 @@ class ICM42688
      * @return     ret < 0 if error
      */
     int setAccelODR(ODR odr);
+    int getAccelODR();
 
     /**
      * @brief      Set the ODR for gyro
@@ -103,6 +121,7 @@ class ICM42688
      * @return     ret < 0 if error
      */
     int setGyroODR(ODR odr);
+    int getGyroODR();
 
     int setFilters(bool gyroFilters, bool accFilters);
 
@@ -130,6 +149,7 @@ class ICM42688
      * @return     ret < 0 if error
      */
     int getAGT();
+    int getRawAGT();
 
     /**
      * @brief      Get accelerometer data, per axis
@@ -156,12 +176,63 @@ class ICM42688
      */
     float temp() const { return _t; }
 
-    int16_t getAccelX_count();
-    int16_t getAccelY_count();
-    int16_t getAccelZ_count();
-    int16_t getGyroX_count();
-    int16_t getGyroY_count();
-    int16_t getGyroZ_count();
+
+    /**
+     * @brief      Get accelerometer Raw data, per axis
+     *
+     * @return     Acceleration in bytes
+     */
+    int16_t rawAccX() const { return _rawAcc[0]; }
+    int16_t rawAccY() const { return _rawAcc[1]; }
+    int16_t rawAccZ() const { return _rawAcc[2]; }
+
+    /**
+     * @brief      Get gyro raw data, per axis
+     *
+     * @return     Angular velocity in bytes
+     */
+    int16_t rawGyrX() const { return _rawGyr[0]; }
+    int16_t rawGyrY() const { return _rawGyr[1]; }
+    int16_t rawGyrZ() const { return _rawGyr[2]; }
+
+    /**
+     * @brief      Get raw temperature of gyro die
+     *
+     * @return     Temperature in bytes
+     */
+    int16_t rawTemp() const { return _rawT; }
+
+    
+    /**
+     * @brief      Get raw temperature of gyro die
+     *
+     * @return     Temperature in bytes
+     */
+    int32_t rawBiasAccX() const{ return _rawAccBias[0];}
+    int32_t rawBiasAccY() const{ return _rawAccBias[1];}
+    int32_t rawBiasAccZ() const{ return _rawAccBias[2];}
+    int32_t rawBiasGyrX() const{ return _rawGyrBias[0];}
+    int32_t rawBiasGyrY() const{ return _rawGyrBias[1];}
+    int32_t rawBiasGyrZ() const{ return _rawGyrBias[2];}
+
+
+
+    
+    
+    int computeOffsets();
+    int setAllOffsets();                   //Set all Offsets computed
+    int setGyrXOffset(int16_t gyrXoffset); //#TODO add the getOffset function
+    int setGyrYOffset(int16_t gyrYoffset);
+    int setGyrZOffset(int16_t gyrZoffset);
+    int setAccXOffset(int16_t accXoffset);
+    int setAccYOffset(int16_t accYoffset);
+    int setAccZOffset(int16_t accZoffset);
+    float getAccelRes();
+    float getGyroRes();
+    int setUIFilterBlock(UIFiltOrd gyroUIFiltOrder,UIFiltOrd accelUIFiltOrder);
+    int setGyroNotchFilter(float gyroNFfreq_x,float gyroNFfreq_y,float gyroNFfreq_z,GyroNFBWsel gyro_nf_bw);//
+    int selfTest();
+    int testingFunction();
 
     int calibrateGyro();
     float getGyroBiasX();
@@ -187,8 +258,6 @@ class ICM42688
     static constexpr uint32_t I2C_CLK = 400000; // 400 kHz
     size_t _numBytes = 0; // number of bytes received from I2C
 
-    int16_t _rawMeas[7]; // temp, accel xyz, gyro xyz
-
     ///\brief SPI Communication
     SPIClass *_spi = {};
     uint8_t _csPin = 0;
@@ -204,6 +273,20 @@ class ICM42688
     float _t = 0.0f;
     float _acc[3] = {};
     float _gyr[3] = {};
+
+    int16_t _rawT = 0;
+    int16_t _rawAcc[3]={};
+    int16_t _rawGyr[3]={};
+
+
+    ///\brief Raw Gyro and Accelero Bias
+    int32_t _rawAccBias[3]={0,0,0};
+    int32_t _rawGyrBias[3] = {0,0,0};
+
+    ///\brief Raw Gyro and Accelero Offsets
+    int16_t _AccOffset[3]={0,0,0};
+    int16_t _GyrOffset[3] = {0,0,0};
+
 
     ///\brief Full scale resolution factors
     float _accelScale = 0.0f;
@@ -269,6 +352,8 @@ class ICM42688
      * @return     Value of WHO_AM_I register
      */
     uint8_t whoAmI();
+
+    void selfTest(int16_t * accelDiff, int16_t * gyroDiff, float * ratio);
 };
 
 class ICM42688_FIFO: public ICM42688 {
