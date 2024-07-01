@@ -5,15 +5,15 @@ Arduino library for communicating with the [ICM42688](https://invensense.tdk.com
 The InvenSense ICM42688 supports I2C, up to 400 kHz, and SPI communication, up to 1 MHz for register setup and 24 MHz for data reading. The following selectable full scale sensor ranges are available:
 
 | Gyroscope Full Scale Range | Accelerometer Full Scale Range |
-| --- | --- |
-| +/- 15.6 (deg/s) | -          |
-| +/- 31.2 (deg/s) | -          |
-| +/- 62.5 (deg/s) | -          |
-| +/- 125 (deg/s)  | -          |
-| +/- 250 (deg/s)  | +/- 2 (g)  |
-| +/- 500 (deg/s)  | +/- 4 (g)  |
-| +/- 1000 (deg/s) | +/- 8 (g)  |
-| +/- 2000 (deg/s) | +/- 16 (g) |
+| -------------------------- | ------------------------------ |
+| +/- 15.6 (deg/s)           | -                              |
+| +/- 31.2 (deg/s)           | -                              |
+| +/- 62.5 (deg/s)           | -                              |
+| +/- 125 (deg/s)            | -                              |
+| +/- 250 (deg/s)            | +/- 2 (g)                      |
+| +/- 500 (deg/s)            | +/- 4 (g)                      |
+| +/- 1000 (deg/s)           | +/- 8 (g)                      |
+| +/- 2000 (deg/s)           | +/- 16 (g)                     |
 
 The ICM42688 samples the gyroscopes, and accelerometers with 16 bit analog to digital converters. It also features programmable digital filters, a precision clock, an embedded temperature sensor, programmable interrupts (including wake on motion), and a 512 byte FIFO buffer.
 
@@ -31,10 +31,17 @@ This library supports both I2C and SPI communication with the ICM42688. The *ICM
 ### I2C Object Declaration
 
 **ICM42688(TwoWire &bus, uint8_t address)**
-An ICM42688 object should be declared, specifying the I2C bus and ICM42688 I2C address. The ICM42688 I2C address will be 0x68 if the AD0 pin is grounded or 0x69 if the AD0 pin is pulled high. For example, the following code declares an ICM42688 object called *IMU* with an ICM42688 sensor located on I2C bus 0 with a sensor address of 0x68 (AD0 grounded). You should specify the SDA and SCL pins for your I2C connection (default for ESP32 is SDA=21, SCL=22, Arduino is SDA=18, SCL=19)
+An ICM42688 object should be declared, specifying the I2C bus and ICM42688 I2C address. The ICM42688 I2C address will be 0x68 if the AD0 pin is grounded or 0x69 if the AD0 pin is pulled high. For example, the following code declares an ICM42688 object called *IMU* with an ICM42688 sensor located on I2C bus 0 with a sensor address of 0x68 (AD0 grounded).
 
 ```C++
-ICM42688 IMU(Wire, 0x68, SDA_PIN, SCL_PIN);
+ICM42688 IMU(Wire, 0x68);
+```
+
+**ICM42688(TwoWire &bus, uint8_t address)**
+An ICM42688 object should be declared, specifying the I2C bus and ICM42688 I2C address. The ICM42688 I2C address will be 0x68 if the AD0 pin is grounded or 0x69 if the AD0 pin is pulled high. For example, the following code declares an ICM42688 object called *IMU* with an ICM42688 sensor located on I2C bus 0 with a sensor address of 0x68 (AD0 grounded). You should specify the SDA and SCL pins for your I2C connection (default for Arduino is SDA=18, SCL=19, ESP32 is SDA=21, SCL=22)
+
+```C++
+ICM42688 IMU(Wire, 0x68, _sda_pin, _scl_pin);
 ```
 
 ### SPI Object Declaration
@@ -79,16 +86,16 @@ status = IMU.setAccelFS(ICM42688::gpm2);
 **(optional) int setGyroRange(GyroRange range)**
 This function sets the gyroscope full scale range to the given  value. By default, if this function is not called, a full scale range of +/- 2000 deg/s will be used. The enumerated gyroscope full scale ranges are:
 
-| Gyroscope Name     | Gyroscope Full Scale Range |
-| ------------------ | -------------------------- |
-| dps15_625          | +/- 15.625 (deg/s)         |
-| dps31_25           | +/- 31.25 (deg/s)          |
-| dps62_5            | +/- 62.5 (deg/s)           |
-| dps125             | +/- 125 (deg/s)            |
-| dps250             | +/- 250 (deg/s)            |
-| dps500             | +/- 500 (deg/s)            |
-| dps1000            | +/- 1000 (deg/s)           |
-| dps2000            | +/- 2000 (deg/s)           |
+| Gyroscope Name | Gyroscope Full Scale Range |
+| -------------- | -------------------------- |
+| dps15_625      | +/- 15.625 (deg/s)         |
+| dps31_25       | +/- 31.25 (deg/s)          |
+| dps62_5        | +/- 62.5 (deg/s)           |
+| dps125         | +/- 125 (deg/s)            |
+| dps250         | +/- 250 (deg/s)            |
+| dps500         | +/- 500 (deg/s)            |
+| dps1000        | +/- 1000 (deg/s)           |
+| dps2000        | +/- 2000 (deg/s)           |
 
 This function returns a positive value on success and a negative value on failure. Please see the *Advanced_I2C example*. The following is an example of selecting an gyroscope full scale range of +/- 250 deg/s.
 

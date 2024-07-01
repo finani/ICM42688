@@ -1,7 +1,7 @@
 #include "ICM42688.h"
 
-// an ICM42688 object with the ICM42688 sensor on I2C bus with address 0x68 using SDA pin 21 and SCL pin 22 (default for ESP32)
-ICM42688 IMU(Wire, 0x68, 21, 22);  // default for ESP32 = 21,22 and Arduino is 18,19
+// an ICM42688 object with the ICM42688 sensor on I2C bus with address 0x68 for Arduino
+ICM42688 IMU(Wire, 0x68);
 
 void setup() {
 	// serial to display data
