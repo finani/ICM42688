@@ -23,7 +23,7 @@ void setup() {
 		while (1) {}
 	}
 
-	// attaching the interrupt to microcontroller pin INT_PIN
+	// attaching the interrupt to micro controller pin INT_PIN
 	pinMode(INT_PIN, INPUT);
 	attachInterrupt(INT_PIN, setImuFlag, RISING);
 

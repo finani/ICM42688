@@ -1,32 +1,30 @@
-// 20240627 JB  Adding method to define custom I2C pins for SDA and SCL (was missing in ICM42688 1.1.0)
-
 #include "ICM42688.h"
-#include "Arduino.h"
 #include "registers.h"
 
 using namespace ICM42688reg;
 
-/* ICM42688 object, input the I2C bus and address using SDA, SCL pins */
+/* ICM42688 object, input the I2C bus and address */
 ICM42688::ICM42688(TwoWire& bus, uint8_t address) {
 	_i2c     = &bus;     // I2C bus
 	_address = address;  // I2C address
 	_useSPI  = false;    // set to use I2C
 }
 
+/* ICM42688 object, input the I2C bus and address using SDA, SCL pins */
 ICM42688::ICM42688(TwoWire& bus, uint8_t address, uint8_t sda_pin, uint8_t scl_pin) {
 	_i2c     = &bus;     // I2C bus
 	_address = address;  // I2C address
 	_useSPI  = false;    // set to use I2C
-	_sda_pin  = sda_pin;   // set SDA to user defined pin
-	_scl_pin  = scl_pin;   // set SCL to user defined pin
+	_sda_pin = sda_pin;  // set SDA to user defined pin
+	_scl_pin = scl_pin;  // set SCL to user defined pin
 }
 
 /* ICM42688 object, input the SPI bus and chip select pin */
-ICM42688::ICM42688(SPIClass& bus, uint8_t csPin, uint32_t SPI_HS_CLK) {
-	_spi         = &bus;   // SPI bus
-	_csPin       = csPin;  // chip select pin
-	_useSPI      = true;   // set to use SPI
-	SPI_HS_CLOCK = SPI_HS_CLK;
+ICM42688::ICM42688(SPIClass& bus, uint8_t csPin, uint32_t spi_hs_clock) {
+	_spi          = &bus;   // SPI bus
+	_csPin        = csPin;  // chip select pin
+	_useSPI       = true;   // set to use SPI
+	_spi_hs_clock = spi_hs_clock;
 }
 
 /* starts communication with the ICM42688 */
@@ -111,7 +109,7 @@ int ICM42688::setAccelFS(AccelFS fssel) {
 	return 1;
 }
 
-/* get the accelerometer full scale range return the ACCELL_FS_SEL value*/
+/* get the accelerometer full scale range return the ACCEL_FS_SEL value*/
 int ICM42688::getAccelFS() {
 	// use low speed SPI for register setting
 	_useSPIHS = false;
@@ -278,7 +276,7 @@ int ICM42688::disableDataReadyInterrupt() {
 }
 
 /* reads the most current data from ICM42688 and stores in buffer */
-int ICM42688::getAGT() {  //modified to use getEawAGT()
+int ICM42688::getAGT() {  // modified to use getRawAGT()
 	if (getRawAGT() < 0) {
 		return -1;
 	}
@@ -297,7 +295,7 @@ int ICM42688::getAGT() {  //modified to use getEawAGT()
 }
 
 /* reads the most current data from ICM42688 and stores in buffer */
-int ICM42688::getRawAGT() {  //Added to return raw data only
+int ICM42688::getRawAGT() {  // Added to return raw data only
 	_useSPIHS = true;          // use the high speed SPI for data readout
 	// grab the data from the ICM42688
 	if (readRegisters(UB0_REG_TEMP_DATA1, 14, _buffer) < 0) {
@@ -347,7 +345,7 @@ int ICM42688_FIFO::enableFifo(bool accel, bool gyro, bool temp) {
 
 /* Start streaming, required to read after enableFifo() under most sensor configurations */
 int ICM42688_FIFO::streamToFifo() {
-	if (writeRegister(ICM42688reg::UB0_REG_FIFO_CONFIG, 1 << 6); < 0) {
+	if (writeRegister(ICM42688reg::UB0_REG_FIFO_CONFIG, 1 << 6) < 0) {
 		return -2;
 	}
 	return 1;
@@ -652,7 +650,7 @@ int ICM42688::readRegisters(uint8_t subAddress, uint8_t count, uint8_t* dest) {
 	if (_useSPI) {
 		// begin the transaction
 		if (_useSPIHS) {
-			_spi->beginTransaction(SPISettings(SPI_HS_CLOCK, MSBFIRST, SPI_MODE3));
+			_spi->beginTransaction(SPISettings(_spi_hs_clock, MSBFIRST, SPI_MODE3));
 		} else {
 			_spi->beginTransaction(SPISettings(SPI_LS_CLOCK, MSBFIRST, SPI_MODE3));
 		}
@@ -753,7 +751,7 @@ int ICM42688::computeOffsets() {
 		return -2;  // upper Gy and Gx bytes
 	}
 	setBank(0);
-	// reinitialise the _rawAccBias and _rawGyrBias
+	// reinitialize the _rawAccBias and _rawGyrBias
 	for (size_t ii = 1; ii < 3; ii++) {
 		_rawAccBias[ii] = 0;
 		_rawGyrBias[ii] = 0;
@@ -1015,11 +1013,11 @@ int ICM42688::setGyroNotchFilter(float gyroNFfreq_x, float gyroNFfreq_y, float g
 	setBank(1);
 	uint16_t nf_coswz;
 	//uint8_t nf_coswz_sel = 0;
-	uint8_t gyro_nf_coswz_low[3] = {0};
-	uint8_t buff                 = 0;
-	float   Fdrv                 = 19'200 / (clkdiv * 10.0f);          // in kHz  (19.2MHz = 19200 kHz)
-	float   fdesired[3] = {gyroNFfreq_x, gyroNFfreq_y, gyroNFfreq_z};  // in kHz - fesdeired between 1kz and 3 kHz
-	float   coswz       = 0;
+	uint8_t     gyro_nf_coswz_low[3] = {0};
+	uint8_t     buff                 = 0;
+	float       Fdrv                 = 19'200 / (clkdiv * 10.0f);          // in kHz  (19.2MHz = 19200 kHz)
+	const float fdesired[3] = {gyroNFfreq_x, gyroNFfreq_y, gyroNFfreq_z};  // in kHz - fesdeired between 1kz and 3 kHz
+	// float coswz = 0;
 	for (size_t ii = 0; ii < 3; ii++) {
 		float coswz = cos(2 * PI * fdesired[ii] / Fdrv);
 		if (coswz <= 0.875) {
@@ -1049,10 +1047,10 @@ int ICM42688::setGyroNotchFilter(float gyroNFfreq_x, float gyroNFfreq_y, float g
 	if (writeRegister(UB1_REG_GYRO_CONFIG_STATIC8, gyro_nf_coswz_low[2]) < 0) {
 		return -2;
 	}
-	if (writeRegister(UB1_REG_GYRO_CONFIG_STATIC9, buff < 0)) {
+	if (writeRegister(UB1_REG_GYRO_CONFIG_STATIC9, buff) < 0) {
 		return -2;
 	}
-	if (writeRegister(UB1_REG_GYRO_CONFIG_STATIC10, gyro_nf_bw < 0)) {
+	if (writeRegister(UB1_REG_GYRO_CONFIG_STATIC10, gyro_nf_bw) < 0) {
 		return -2;
 	}
 	//Set Bank 0 to allow data measurements
@@ -1119,25 +1117,25 @@ float ICM42688::getGyroRes() {
 	return gyroRes;
 }
 
-/* Selftest*/
+/* Self Test*/
 int ICM42688::selfTest() {
 	return 1;
 }
 
 /*//#TODO
 //High priority
-raw data reading         <-- Validated
-Offset Bias compute      <-- Validated
-Offset Bias set          <-- Validated
-get Full scale resoluton <-- To be tested
-Notch Filter             <-- To be tested
-AAF Filter               <-- To be developed
-UI Filter Block          <-- To be developed
-Self test                <-- To be developed
+raw data reading          <-- Validated
+Offset Bias compute       <-- Validated
+Offset Bias set           <-- Validated
+get Full scale resolution <-- To be tested
+Notch Filter              <-- To be tested
+AAF Filter                <-- To be developed
+UI Filter Block           <-- To be developed
+Self test                 <-- To be developed
 
 
 
-//Low priotity
+//Low priority
 Read INT_STATUS          <-- get info if data are available
 
 ApexStatus   => INT_STATUS2 and INT_STATUS3

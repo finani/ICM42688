@@ -65,10 +65,18 @@ class ICM42688 {
      *
      * @param      bus      I2C bus
      * @param[in]  address  Address of ICM 42688-p device
-     * @param[in]  _sda_pin  GPIO pin to use for I2C SDA signal
-     * @param[in]  _scl_pin  GPIO pin to use for I2C SCL signal
      */
-	ICM42688(TwoWire& bus, uint8_t address, uint8_t _sda_pin, uint8_t _scl_pin);
+	ICM42688(TwoWire& bus, uint8_t address);
+
+	/**
+     * @brief      Constructor for I2C communication using SDA, SCL pins
+     *
+     * @param      bus      I2C bus
+     * @param[in]  address  Address of ICM 42688-p device
+     * @param[in]  sda_pin  GPIO pin to use for I2C SDA signal
+     * @param[in]  scl_pin  GPIO pin to use for I2C SCL signal
+     */
+	ICM42688(TwoWire& bus, uint8_t address, uint8_t sda_pin, uint8_t scl_pin);
 
 	/**
      * @brief      Constructor for SPI communication
@@ -76,7 +84,7 @@ class ICM42688 {
      * @param      bus    SPI bus
      * @param[in]  csPin  Chip Select pin
      */
-	ICM42688(SPIClass& bus, uint8_t csPin, uint32_t SPI_HS_CLK = 8'000'000);
+	ICM42688(SPIClass& bus, uint8_t csPin, uint32_t spi_hs_clock = 8'000'000);
 
 	/**
      * @brief      Initialize the device.
@@ -143,7 +151,7 @@ class ICM42688 {
 	int disableDataReadyInterrupt();
 
 	/**
-     * @brief      Transfers data from ICM 42688-p to microcontroller.
+     * @brief      Transfers data from ICM 42688-p to mcu.
      *             Must be called to access new measurements.
      *
      * @return     ret < 0 if error
@@ -267,14 +275,14 @@ class ICM42688 {
 	size_t                    _numBytes = 0;        // number of bytes received from I2C
 
 	///\brief SPI Communication
-	SPIClass*                 _spi         = {};
-	uint8_t                   _sda_pin     = 18;
-	uint8_t                   _scl_pin     = 19;
-	uint8_t                   _csPin       = 0;
-	bool                      _useSPI      = false;
-	bool                      _useSPIHS    = false;
-	static constexpr uint32_t SPI_LS_CLOCK = 1'000'000;  // 1 MHz
-	uint32_t                  SPI_HS_CLOCK = 8'000'000;  // 8 MHz
+	SPIClass*                 _spi          = {};
+	uint8_t                   _sda_pin      = 18;
+	uint8_t                   _scl_pin      = 19;
+	uint8_t                   _csPin        = 0;
+	bool                      _useSPI       = false;
+	bool                      _useSPIHS     = false;
+	static constexpr uint32_t SPI_LS_CLOCK  = 1'000'000;  // 1 MHz
+	uint32_t                  _spi_hs_clock = 8'000'000;  // 8 MHz
 
 	// buffer for reading from sensor
 	uint8_t _buffer[15] = {};
@@ -288,11 +296,11 @@ class ICM42688 {
 	int16_t _rawAcc[3] = {};
 	int16_t _rawGyr[3] = {};
 
-	///\brief Raw Gyro and Accelero Bias
+	///\brief Raw Gyro and Accelerometer Bias
 	int32_t _rawAccBias[3] = {0, 0, 0};
 	int32_t _rawGyrBias[3] = {0, 0, 0};
 
-	///\brief Raw Gyro and Accelero Offsets
+	///\brief Raw Gyro and Accelerometer Offsets
 	int16_t _AccOffset[3] = {0, 0, 0};
 	int16_t _GyrOffset[3] = {0, 0, 0};
 
@@ -301,8 +309,8 @@ class ICM42688 {
 	float _gyroScale  = 0.0f;
 
 	///\brief Full scale selections
-	AccelFS _accelFS;
-	GyroFS  _gyroFS;
+	AccelFS _accelFS = gpm16;
+	GyroFS  _gyroFS  = dps2000;
 
 	///\brief Accel calibration
 	float _accBD[3]  = {};
