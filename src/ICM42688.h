@@ -317,7 +317,7 @@ class ICM42688
 
     uint8_t _bank = 0; ///< current user bank
 
-    const uint8_t FIFO_EN = 0x23;
+    const uint8_t FIFO_EN = 0x5F;
     const uint8_t FIFO_TEMP_EN = 0x04;
     const uint8_t FIFO_GYRO = 0x02;
     const uint8_t FIFO_ACCEL = 0x01;
@@ -360,6 +360,7 @@ class ICM42688_FIFO: public ICM42688 {
   public:
     using ICM42688::ICM42688;
     int enableFifo(bool accel,bool gyro,bool temp);
+    int streamToFifo();
     int readFifo();
     void getFifoAccelX_mss(size_t *size,float* data);
     void getFifoAccelY_mss(size_t *size,float* data);
@@ -373,6 +374,8 @@ class ICM42688_FIFO: public ICM42688 {
     bool _enFifoAccel = false;
     bool _enFifoGyro = false;
     bool _enFifoTemp = false;
+    bool _enFifoTimestamp = false;
+    bool _enFifoHeader = false;
     size_t _fifoSize = 0;
     size_t _fifoFrameSize = 0;
     float _axFifo[85] = {};

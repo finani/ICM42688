@@ -268,27 +268,50 @@ int ICM42688::getRawAGT() { //Added to return raw data only
   return 1;
 }
 
+/* configures and enables the FIFO buffer
+  Enforces best-fitting structure (1, 2, or 3) but cannot replicate Packet 4 as choosing between 3/4 requires
+  additional argument for high-resolution
 
-/* configures and enables the FIFO buffer  */
+  See https://invensense.tdk.com/wp-content/uploads/2020/04/ds-000347_icm-42688-p-datasheet.pdf, 6.1 for details
+*/
 int ICM42688_FIFO::enableFifo(bool accel,bool gyro,bool temp) {
-  // use low speed SPI for register setting
-  _useSPIHS = false;
-  if(writeRegister(FIFO_EN,(accel*FIFO_ACCEL)|(gyro*FIFO_GYRO)|(temp*FIFO_TEMP_EN)) < 0) {
-    return -2;
-  }
   _enFifoAccel = accel;
   _enFifoGyro = gyro;
-  _enFifoTemp = temp;
-  _fifoFrameSize = accel*6 + gyro*6 + temp*2;
+  _enFifoTemp = true; // all structures have 1-byte temp, didn't return error to maintain backwards compatibility
+  _enFifoTimestamp = accel && gyro; // can only read both accel and gyro in Structure 3 or 4, both have 2-byte timestamp
+  _enFifoHeader = accel || gyro; // if neither sensor requested, FIFO will not send any more packets
+  _fifoFrameSize = _enFifoHeader * 1 + _enFifoAccel*6 + _enFifoGyro*6 + _enFifoTemp + _enFifoTimestamp * 2;
+
+  // use low speed SPI for register setting
+  _useSPIHS = false;
+  if(writeRegister(FIFO_EN,(_enFifoAccel*FIFO_ACCEL)|(_enFifoGyro*FIFO_GYRO)|(_enFifoTemp*FIFO_TEMP_EN)) < 0) {
+    return -2;
+  }
   return 1;
 }
 
-/* reads data from the ICM42688 FIFO and stores in buffer */
+/* Start streaming, required to read after enableFifo() under most sensor configurations */
+int ICM42688_FIFO::streamToFifo(){
+  if(writeRegister(ICM42688reg::UB0_REG_FIFO_CONFIG, 1 << 6); < 0) {
+    return -2;
+  }
+  return 1;
+}
+
+/* reads data from the ICM42688 FIFO and stores in buffer
+  High-resolution mode not yet supported */
 int ICM42688_FIFO::readFifo() {
   _useSPIHS = true; // use the high speed SPI for data readout
   // get the fifo size
   readRegisters(UB0_REG_FIFO_COUNTH, 2, _buffer);
   _fifoSize = (((uint16_t) (_buffer[0]&0x0F)) <<8) + (((uint16_t) _buffer[1]));
+
+  // precalculate packet structure as per-packet recalculation based on headers isn't reliable
+  // header does not confirm whether packet is sized for high-resolution (20-bit) data
+  size_t numFrames = _fifoSize/_fifoFrameSize;
+  size_t accIndex = 1;
+  size_t gyroIndex = accIndex + _enFifoAccel * 6;
+  size_t tempIndex = gyroIndex + _enFifoGyro * 6;
   // read and parse the buffer
   for (size_t i=0; i < _fifoSize/_fifoFrameSize; i++) {
     // grab the data from the ICM42688
@@ -298,33 +321,32 @@ int ICM42688_FIFO::readFifo() {
     if (_enFifoAccel) {
       // combine into 16 bit values
       int16_t rawMeas[3];
-      rawMeas[0] = (((int16_t)_buffer[0]) << 8) | _buffer[1];
-      rawMeas[1] = (((int16_t)_buffer[2]) << 8) | _buffer[3];
-      rawMeas[2] = (((int16_t)_buffer[4]) << 8) | _buffer[5];
+      rawMeas[0] = (((int16_t)_buffer[0 + accIndex]) << 8) | _buffer[1 + accIndex];
+      rawMeas[1] = (((int16_t)_buffer[2 + accIndex]) << 8) | _buffer[3 + accIndex];
+      rawMeas[2] = (((int16_t)_buffer[4 + accIndex]) << 8) | _buffer[5 + accIndex];
       // transform and convert to float values
       _axFifo[i] = ((rawMeas[0] * _accelScale) - _accB[0]) * _accS[0];
       _ayFifo[i] = ((rawMeas[1] * _accelScale) - _accB[1]) * _accS[1];
       _azFifo[i] = ((rawMeas[2] * _accelScale) - _accB[2]) * _accS[2];
-      _aSize = _fifoSize / _fifoFrameSize;
+      _aSize = numFrames;
     }
     if (_enFifoTemp) {
-      // combine into 16 bit values
-      int16_t rawMeas = (((int16_t)_buffer[0 + _enFifoAccel*6]) << 8) | _buffer[1 + _enFifoAccel*6];
+      int8_t rawMeas = _buffer[tempIndex + 0];
       // transform and convert to float values
       _tFifo[i] = (static_cast<float>(rawMeas) / TEMP_DATA_REG_SCALE) + TEMP_OFFSET;
-      _tSize = _fifoSize/_fifoFrameSize;
+      _tSize = numFrames;
     }
     if (_enFifoGyro) {
       // combine into 16 bit values
       int16_t rawMeas[3];
-      rawMeas[0] = (((int16_t)_buffer[0 + _enFifoAccel*6 + _enFifoTemp*2]) << 8) | _buffer[1 + _enFifoAccel*6 + _enFifoTemp*2];
-      rawMeas[1] = (((int16_t)_buffer[2 + _enFifoAccel*6 + _enFifoTemp*2]) << 8) | _buffer[3 + _enFifoAccel*6 + _enFifoTemp*2];
-      rawMeas[2] = (((int16_t)_buffer[4 + _enFifoAccel*6 + _enFifoTemp*2]) << 8) | _buffer[5 + _enFifoAccel*6 + _enFifoTemp*2];
+      rawMeas[0] = (((int16_t)_buffer[0 + gyroIndex]) << 8) | _buffer[1 + gyroIndex];
+      rawMeas[1] = (((int16_t)_buffer[2 + gyroIndex]) << 8) | _buffer[3 + gyroIndex];
+      rawMeas[2] = (((int16_t)_buffer[4 + gyroIndex]) << 8) | _buffer[5 + gyroIndex];
       // transform and convert to float values
       _gxFifo[i] = (rawMeas[0] * _gyroScale) - _gyrB[0];
       _gyFifo[i] = (rawMeas[1] * _gyroScale) - _gyrB[1];
       _gzFifo[i] = (rawMeas[2] * _gyroScale) - _gyrB[2];
-      _gSize = _fifoSize/_fifoFrameSize;
+      _gSize = numFrames;
     }
   }
   return 1;
