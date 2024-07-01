@@ -1,14 +1,18 @@
+// 20240627 JB  Adding method to define custom I2C pins for SDA and SCL (was missing in ICM42688 1.1.0)
+
 #include "Arduino.h"
 #include "ICM42688.h"
 #include "registers.h"
 
 using namespace ICM42688reg;
 
-/* ICM42688 object, input the I2C bus and address */
-ICM42688::ICM42688(TwoWire &bus, uint8_t address) {
+/* ICM42688 object, input the I2C bus and address using SDA, SCL pins */
+ICM42688::ICM42688(TwoWire &bus, uint8_t address, uint8_t sda_in, uint8_t scl_in) {
   _i2c = &bus; // I2C bus
   _address = address; // I2C address
   _useSPI = false; // set to use I2C
+  SDA_PIN = sda_in; // set SDA to user defined pin
+  SCL_PIN = scl_in; // set SCL to user defined pin
 }
 
 /* ICM42688 object, input the SPI bus and chip select pin */
@@ -32,7 +36,7 @@ int ICM42688::begin() {
     _spi->begin();
   } else { // using I2C for communication
     // starting the I2C bus
-    _i2c->begin();
+    _i2c->begin(SDA_PIN,SCL_PIN);
     // setting the I2C clock
     _i2c->setClock(I2C_CLK);
   }

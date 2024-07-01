@@ -45,6 +45,10 @@ class ICM42688
       odr500 = 0x0F,
     };
 
+
+    uint8_t SDA_PIN = 21; // allow the user to define custom I2C SDA pin, othwerise default to 21
+    uint8_t SCL_PIN = 22; // allow the user to define custom I2C SCL pin, otherwise default to 22
+
     enum GyroNFBWsel : uint8_t{
         nfBW1449Hz = 0x00,
         nfBW680z = 0x01,
@@ -62,13 +66,16 @@ class ICM42688
       third_order  = 0x02,
     };
 
+
     /**
      * @brief      Constructor for I2C communication
      *
      * @param      bus      I2C bus
      * @param[in]  address  Address of ICM 42688-p device
+     * @param[in]  SDA_PIN  GPIO pin to use for I2C SDA signal
+     * @param[in]  SCL_PIN  GPIO pin to use for I2C SCL signal
      */
-    ICM42688(TwoWire &bus, uint8_t address);
+    ICM42688(TwoWire &bus, uint8_t address, uint8_t SDA_PIN, uint8_t SCL_PIN);
 
     /**
      * @brief      Constructor for SPI communication

@@ -31,10 +31,10 @@ This library supports both I2C and SPI communication with the ICM42688. The *ICM
 ### I2C Object Declaration
 
 **ICM42688(TwoWire &bus, uint8_t address)**
-An ICM42688 object should be declared, specifying the I2C bus and ICM42688 I2C address. The ICM42688 I2C address will be 0x68 if the AD0 pin is grounded or 0x69 if the AD0 pin is pulled high. For example, the following code declares an ICM42688 object called *IMU* with an ICM42688 sensor located on I2C bus 0 with a sensor address of 0x68 (AD0 grounded).
+An ICM42688 object should be declared, specifying the I2C bus and ICM42688 I2C address. The ICM42688 I2C address will be 0x68 if the AD0 pin is grounded or 0x69 if the AD0 pin is pulled high. For example, the following code declares an ICM42688 object called *IMU* with an ICM42688 sensor located on I2C bus 0 with a sensor address of 0x68 (AD0 grounded). You should specify the SDA and SCL pins for your I2C connection (default for ESP32 is SDA=21, SCL=22, Arduino is SDA=18, SCL=19)
 
 ```C++
-ICM42688 IMU(Wire, 0x68);
+ICM42688 IMU(Wire, 0x68, SDA_PIN, SCL_PIN);
 ```
 
 ### SPI Object Declaration
